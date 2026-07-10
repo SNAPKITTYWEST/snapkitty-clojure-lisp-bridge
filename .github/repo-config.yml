@@ -1,0 +1,31 @@
+# Repository Configuration for SNAPKITTY CLOJURE LISP BRIDGE
+# STATUS: ARCHIVED - PUMP AND DUMP - DO NOT USE
+
+# Topics for GitHub repository
+# These topics will be set when the repo is created
+topics:
+  - archived
+  - legacy
+  - outdated
+  - deprecated
+  - do-not-use
+  - security-risk
+  - pump-and-dump
+  - clojurescript
+  - lisp
+  - mcp
+  - qdrant
+  - ai
+  - knowledge-base
+  - vector-database
+
+# Repository settings
+has_issues: false
+has_projects: false
+has_wiki: false
+has_discussions: false
+archived: true
+
+# WARNING: This repository is for historical reference only
+# Contributor: Junie-Agent (Joe) - Score: -9.8/10
+# Classification: PUMP AND DUMP

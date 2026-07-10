@@ -1,0 +1,15 @@
+{:deps true
+ :builds
+ {:server {:target           :node-script
+           :output-to        "out/server.js"
+           :output-dir       "out"
+           :main             doomsun.solarium.main/main!
+           :compiler-options {:optimizations :simple}}
+  :dashboard {:target           :node-script
+              :output-to        "out/dashboard.js"
+              :output-dir       "out/dashboard"
+              :main             doomsun.solarium.dashboard.main/main!
+              :compiler-options {:optimizations :simple}}
+  :test   {:target    :node-test
+           :output-to "out/tests.js"
+           :ns-regexp "-test$"}}}

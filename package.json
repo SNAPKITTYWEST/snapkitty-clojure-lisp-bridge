@@ -1,0 +1,33 @@
+{
+  "name": "solarium",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared knowledge base MCP server backed by Qdrant and local embeddings",
+  "bin": {
+    "solarium": "out/server.js",
+    "solarium-dashboard": "out/dashboard.js"
+  },
+  "scripts": {
+    "build": "npx shadow-cljs release server",
+    "css:dashboard": "npx @tailwindcss/cli -i src/css/dashboard.css -o out/dashboard/dashboard.css --minify",
+    "build:dashboard": "npm run css:dashboard && npx shadow-cljs release dashboard",
+    "build:all": "npx shadow-cljs release server dashboard",
+    "watch": "npx shadow-cljs watch server",
+    "watch:dashboard": "npm run css:dashboard && npx shadow-cljs watch dashboard",
+    "watch:all": "npx shadow-cljs watch server dashboard",
+    "test": "npx shadow-cljs compile test && node out/tests.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.4.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "marked": "^17.0.5",
+    "onnxruntime-node": "^1.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "@tailwindcss/typography": "^0.5.19",
+    "shadow-cljs": "^3.3.6",
+    "tailwindcss": "^4.2.2"
+  }
+}
