@@ -7,7 +7,7 @@
       "cflags_cc": ["-std=c++17", "-Wall", "-Wextra", "-O3"],
       "ldflags": ["-ldl"],
       "include_dirs": [
-        "<!(node -p \"require('path').join(require('os').homedir(), '.node-gyp', require('semver').major(process.version), 'include')\")"
+        "<!(node -e \"const v = process.version.split('.'); console.log(require('path').join(require('os').homedir(), '.node-gyp', v[0].substring(1), 'include'))\")"
       ]
     }
   ]
