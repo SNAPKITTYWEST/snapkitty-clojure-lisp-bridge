@@ -8,10 +8,12 @@
     "solarium-dashboard": "out/dashboard.js"
   },
   "scripts": {
+    "build:native": "bash native/build.sh",
+    "prebuild": "npm run build:native",
     "build": "npx shadow-cljs release server",
     "css:dashboard": "npx @tailwindcss/cli -i src/css/dashboard.css -o out/dashboard/dashboard.css --minify",
     "build:dashboard": "npm run css:dashboard && npx shadow-cljs release dashboard",
-    "build:all": "npx shadow-cljs release server dashboard",
+    "build:all": "npm run build:native && npx shadow-cljs release server dashboard",
     "watch": "npx shadow-cljs watch server",
     "watch:dashboard": "npm run css:dashboard && npx shadow-cljs watch dashboard",
     "watch:all": "npx shadow-cljs watch server dashboard",
