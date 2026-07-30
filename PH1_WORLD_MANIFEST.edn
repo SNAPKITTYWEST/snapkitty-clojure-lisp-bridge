@@ -1,0 +1,71 @@
+;; PH1.S1 — Runtime World Archaeology
+;; SKC-LISP-WORLD-COQ-001 — Phase 1: Inventory & Semantic Freeze
+
+{:phase "PH1.S1"
+ :step "World Archaeology"
+ :date "2026-07-30"
+ :objective "Inventory complete Lisp runtime world"
+
+ :object-kinds
+ {:nil {:cardinality 1 :status "canonical" :mutable false}
+  :boolean {:cardinality 2 :status "canonical" :values [:true :false] :mutable false}
+  :integer {:cardinality "unbounded" :status "canonical" :mutable false}
+  :rational {:cardinality "unbounded" :status "canonical" :mutable false}
+  :character {:cardinality "unbounded" :status "canonical" :mutable false}
+  :string {:cardinality "unbounded" :status "heap" :mutable true}
+  :symbol {:cardinality "unbounded" :status "interned" :mutable false}
+  :keyword {:cardinality "unbounded" :status "interned" :mutable false}
+  :cons {:cardinality "unbounded" :status "heap" :mutable true :fields [:car :cdr]}
+  :vector {:cardinality "unbounded" :status "heap" :mutable true}
+  :byte-vector {:cardinality "unbounded" :status "heap" :mutable true}
+  :hash-table {:cardinality "unbounded" :status "heap" :mutable true}
+  :package {:cardinality "unbounded" :status "global" :mutable true :fields [:name :symbols :documentation]}
+  :environment {:cardinality "unbounded" :status "heap" :mutable true :fields [:parent :bindings]}
+  :binding-cell {:cardinality "unbounded" :status "heap" :mutable true :fields [:symbol :value]}
+  :closure {:cardinality "unbounded" :status "heap" :mutable true :fields [:code :environment :captured-vars]}
+  :macro {:cardinality "unbounded" :status "heap" :mutable true :fields [:name :expansion-fn]}
+  :primitive {:cardinality "bounded" :status "global" :mutable false}
+  :code-object {:cardinality "unbounded" :status "heap" :mutable true :fields [:instructions :metadata :fingerprint]}
+  :continuation {:cardinality "unbounded" :status "heap" :mutable false :fields [:saved-state :resumption-point]}
+  :frame {:cardinality "unbounded" :status "heap" :mutable false :fields [:return-addr :locals :parent-frame]}
+  :condition {:cardinality "unbounded" :status "heap" :mutable false :fields [:type :message :context]}
+  :handler {:cardinality "unbounded" :status "heap" :mutable false :fields [:predicate :handler-fn]}
+  :capability {:cardinality "bounded" :status "global" :mutable false}
+  :machine-metadata {:cardinality "unbounded" :status "heap" :mutable true :fields [:generation :timestamps :checksums]}}
+
+ :current-source-tree
+ {:location "src/snapkitty/lisp/"
+  :namespace-structure
+  {:mcp
+   {:files [:server.cljs :tools.cljs :config.cljs :util.cljs]
+    :responsibilities ["MCP protocol handling" "Tool registration" "Input validation" "Logging"]}
+   :knowledge
+   {:files [:store.cljs :qdrant.cljs :embedding.cljs :chunking.cljs]
+    :responsibilities ["Document storage" "Vector DB integration" "ONNX embeddings" "Text chunking"]}
+   :bridge
+   {:files [:reader.cljs :compiler.cljs :macros.cljs]
+    :responsibilities ["LISP code parsing" "Form compilation" "Macro expansion"]}
+   :integration
+   {:files [:world.cljs]
+    :responsibilities ["World registry" "Multi-dialect coordination" "LISP unification"]}}}
+
+ :object-graph-live-objects
+ [:world-registry "snapkitty.lisp.integration.world atom"
+  :rate-limiter "snapkitty.lisp.knowledge.store token bucket"
+  :model-cache "snapkitty.lisp.knowledge.embedding ONNX model"
+  :mcp-server "MCP instance in mcp/server startup"
+  :capability-registry "External resources (Qdrant, ONNX, clock)"
+  :symbol-table "Via cljs.reader"
+  :environment-stack "Via explicit mcp/server state"]
+
+ :verification
+ {:all-25-kinds-present true
+  :symbol-table-exists true
+  :closures-in-scope true
+  :code-objects-present true
+  :environment-chain-present false :note "Not yet explicit in current implementation"
+  :continuation-stack-present false :note "Implicit in host stack; will be explicit in PH2"
+  :frame-stack-present false :note "Will be added in PH2"
+  :mutation-journal-present false :note "Will be added in PH2"}
+
+ :next-step "PH1.S2 — Formal Coq schemas"}

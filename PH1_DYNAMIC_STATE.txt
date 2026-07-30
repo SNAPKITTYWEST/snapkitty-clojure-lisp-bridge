@@ -1,0 +1,48 @@
+PH1.S1 — DYNAMIC MACHINE STATE
+
+Current: Implicit in Promesa + host call stack
+Target: Explicit MachineState record
+
+CURRENT STATE (Host-Dependent):
+- Call stack: Host JavaScript (implicit, recursive)
+- Value stack: Promesa promise chains (implicit)
+- Frames: None (host stack)
+- Environment: Via cljs.reader bindings (implicit lexical scope)
+- PC: Host instruction pointer (implicit)
+- Status: Promise.then chains (implicit)
+- Handlers: Try/catch (implicit)
+
+EXPLICIT MACHINE STATE (Target - PH2):
+{
+  :world-generation nat
+  :control Control
+  :value-stack [Value ...]
+  :frame-stack [Frame ...]
+  :environment ObjectId
+  :heap {ObjectId → Object}
+  :code-store {CodeId → CodeObject}
+  :program-counter (code-id, instruction-offset)
+  :dynamic-context DynamicContext
+  :handlers [Handler ...]
+  :pending-effects [Effect ...]
+  :mutation-log [MutationEvent ...]
+  :status Running | Halted | Trapped | Suspended
+}
+
+LIVE OBJECTS (snapkitty.lisp):
+✓ world-registry (atom @ integration/world.cljs)
+✓ rate-limiter (atom @ knowledge/store.cljs)
+✓ model-cache (atom @ knowledge/embedding.cljs)
+✓ mcp-server (McpServer @ mcp/server.cljs)
+
+MISSING (To Add in PH2):
+✗ explicit frame-stack
+✗ explicit value-stack
+✗ explicit continuation store
+✗ explicit machine-state record
+✗ explicit step function
+✗ mutation journal
+
+CONSTRAINT (R2):
+Every evaluation step must be: step : MachineState → StepResult
+No implicit recursion on host call stack.
