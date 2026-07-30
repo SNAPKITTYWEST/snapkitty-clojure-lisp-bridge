@@ -1,10 +1,11 @@
 # SNAPKITTY CLOJURE LISP BRIDGE
 
-> **Unified LISP-Clojure world: ClojureScript MCP server + semantic knowledge base + LISP code compiler**
+> **Unified LISP-Clojure world: ClojureScript MCP server + semantic knowledge base + LISP code compiler + Ahmad's EmojiScript bytecode dialect + Hardware-accelerated NASM validators**
 
-**Status:** CLEAN BUILD v1.0.0 (2026-07-25)  
-**Tech Stack:** ClojureScript (shadow-cljs) + Qdrant + ONNX embeddings + MCP protocol  
-**License:** Apache 2.0
+**Status:** PRODUCTION v1.1.0 (2026-07-30)  
+**Components:** EmojiScript VM + NASM validators (mutation gate, digest verification) + Native binding (Windows/Linux) + 8 MCP tools + Lisp Machine CLI  
+**Tech Stack:** ClojureScript (shadow-cljs) + Qdrant + ONNX embeddings + MCP protocol + x64 Assembly + Node.js C++ binding  
+**License:** Sovereign Source
 
 ---
 
