@@ -20,32 +20,32 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install Rocq
+    - name: Install Coq Compiler
       run: |
         sudo apt-get update
         sudo apt-get install -y opam
         opam init -a -y
         eval $(opam env)
         opam repo add coq-released https://coq.inria.fr/opam/released
-        opam install -y rocq ocamlc
-        echo "ROCQ_PATH=$(opam config var lib)/rocq" >> $GITHUB_ENV
+        opam install -y coq
+        echo "COQ_PATH=$(opam config var lib)/coq" >> $GITHUB_ENV
         echo "$(opam config exec -- ocamlfind printconf bin)" >> $GITHUB_PATH
 
-    - name: Verify Rocq installation
+    - name: Verify Coq installation
       run: |
-        rocqc --version
-        ls -la $(opam config var lib)/rocq
+        coqc --version
+        which coqc
 
     - name: Build _CoqProject
       working-directory: ./coq
       run: |
-        rocq_makefile -f _CoqProject -o Makefile.rocq
+        coq_makefile -f _CoqProject -o Makefile.coq
         ls -la
 
     - name: Compile Coq files
       working-directory: ./coq
       run: |
-        rocq -R World World -R Machine Machine -R Mutation Mutation -R Dump Dump -R Proofs Proofs \
+        coqc -R World World -R Machine Machine -R Mutation Mutation -R Dump Dump -R Proofs Proofs \
           World/ObjectKinds.v \
           Machine/State.v \
           Machine/StepRelation.v \
