@@ -4,7 +4,8 @@
             [zod :as z]
             [snapkitty.lisp.mcp.util :as util]
             [snapkitty.lisp.knowledge.store :as store]
-            [snapkitty.lisp.native :as native]))
+            [snapkitty.lisp.native :as native]
+            [snapkitty.lisp.emojiscript :as emoji]))
 
 ;; === INPUT SCHEMAS (Zod Validation) ===
 
@@ -46,6 +47,15 @@
     {:message (z/string)
      :signature (z/string)
      :public-key (z/string)}))
+
+(def compile-emojiscript-schema
+  (z/object
+    {:source (z/string)}))
+
+(def execute-emojiscript-schema
+  (z/object
+    {:source (z/string)
+     :max-steps (z/number {:optional true :default 10000})}))
 
 ;; === TOOL HANDLERS ===
 
@@ -101,6 +111,35 @@
                              "VALID"
                              (str "INVALID — " (:details result)))))))
 
+(defn handle-compile-emojiscript [input]
+  "Compile Ahmad's EmojiScript to bytecode — emoji tokens → SigilOp ops"
+  (p/let [validated (z/parse compile-emojiscript-schema input)
+          {:keys [source]} validated]
+    (try
+      (let [result (emoji/compile-emojiscript source)]
+        (util/tool-result
+          (str "✅ Compiled: " (:instructions-count result) " instructions\n"
+               "Hash: " (subs (:hash result) 0 16) "...\n"
+               "Bytecode: " (pr-str (:bytecode result)))))
+      (catch js/Error e
+        (util/tool-result (str "❌ Compilation failed: " (.-message e)))))))
+
+(defn handle-execute-emojiscript [input]
+  "Execute Ahmad's EmojiScript bytecode — stack-based interpreter"
+  (p/let [validated (z/parse execute-emojiscript-schema input)
+          {:keys [source max-steps]} validated
+          compiled (try
+                     (emoji/compile-emojiscript source)
+                     (catch js/Error e
+                       (throw (ex-info "Compile failed" {:error (.-message e)}))))
+          result (emoji/execute-emojiscript (:bytecode compiled) :max-steps max-steps)]
+    (util/tool-result
+      (if (:error result)
+        (str "❌ Runtime error: " (:error result))
+        (str "✅ Result: " (:result result) "\n"
+             "Stack: " (pr-str (:stack result)) "\n"
+             "Steps: " (:steps result) " / " max-steps)))))
+
 ;; === TOOL REGISTRATION ===
 
 (defn register-tools! [mcp-server cfg]
@@ -128,5 +167,13 @@
                 {:name "verify_ed25519"
                  :description "Ed25519 signature verification via native ASM"
                  :inputSchema verify-ed25519-schema
-                 :handler handle-verify-ed25519}]]
+                 :handler handle-verify-ed25519}
+                {:name "compile_emojiscript"
+                 :description "Ahmad's EmojiScript → bytecode compiler (🔢6 🔢7 ✖️ ↩️)"
+                 :inputSchema compile-emojiscript-schema
+                 :handler handle-compile-emojiscript}
+                {:name "execute_emojiscript"
+                 :description "Ahmad's EmojiScript bytecode executor (stack-based VM)"
+                 :inputSchema execute-emojiscript-schema
+                 :handler handle-execute-emojiscript}]]
     (.addTool mcp-server tool)))
