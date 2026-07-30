@@ -1,0 +1,36 @@
+(* PH4.S1 — All 30 Instructions (Exact from XML) *)
+
+Inductive instruction : Type :=
+  | CONST
+  | LOOKUP
+  | BIND
+  | PUSH
+  | POP
+  | CONS
+  | CAR
+  | CDR
+  | SET_CAR
+  | SET_CDR
+  | MAKE_CLOSURE
+  | CALL
+  | TAIL_CALL
+  | RETURN
+  | JUMP
+  | JUMP_IF_FALSE
+  | PUSH_FRAME
+  | POP_FRAME
+  | CAPTURE_CONTINUATION
+  | RESTORE_CONTINUATION
+  | RAISE
+  | INSTALL_HANDLER
+  | REMOVE_HANDLER
+  | REQUEST_EFFECT
+  | HALT
+  | PATCH_CODE
+  | DEFINE_CODE
+  | REPLACE_FUNCTION
+  | REWRITE_DISPATCH
+  | COMMIT_GENERATION
+  | ROLLBACK_GENERATION.
+
+Definition instruction_count : nat := 30.
