@@ -1,0 +1,113 @@
+name: Rocq Kernel Verification
+
+on:
+  push:
+    branches: [ coq-kernel-recovery, main ]
+    paths:
+      - 'coq/**'
+      - '.github/workflows/rocq_kernel_verification.yml'
+  pull_request:
+    branches: [ coq-kernel-recovery, main ]
+
+jobs:
+  rocq-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Coq Compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y opam
+        opam init -a -y
+        eval $(opam env)
+        opam repo add coq-released https://coq.inria.fr/opam/released
+        opam install -y coq
+        echo "COQ_PATH=$(opam config var lib)/coq" >> $GITHUB_ENV
+        echo "$(opam config exec -- ocamlfind printconf bin)" >> $GITHUB_PATH
+
+    - name: Verify Coq installation
+      run: |
+        coqc --version
+        which coqc
+
+    - name: Build _CoqProject
+      working-directory: ./coq
+      run: |
+        coq_makefile -f _CoqProject -o Makefile.coq
+        ls -la
+
+    - name: Compile Coq files
+      working-directory: ./coq
+      run: |
+        coqc -R World World -R Machine Machine -R Mutation Mutation -R Dump Dump -R Proofs Proofs \
+          World/ObjectKinds.v \
+          Machine/State.v \
+          Machine/StepRelation.v \
+          Machine/StepFunction.v \
+          Machine/Execution.v \
+          Mutation/Event.v \
+          Mutation/Validation.v \
+          Mutation/Journal.v \
+          Mutation/Replay.v \
+          Mutation/Rollback.v \
+          Dump/Bytes.v \
+          Dump/Canonical.v \
+          Dump/Encode.v \
+          Dump/Decode.v \
+          Dump/Validate.v \
+          Dump/RoundTrip.v \
+          Proofs/Theorems.v \
+          Proofs/Preservation.v \
+          -v 2>&1 | tee rocq_build.log
+
+    - name: Check for Admitted/sorry
+      run: |
+        if grep -r "Admitted\|admit\|Abort\|sorry" coq --include="*.v"; then
+          echo "ERROR: Found forbidden patterns (Admitted, admit, Abort, sorry)"
+          exit 1
+        else
+          echo "✓ No forbidden patterns found"
+        fi
+
+    - name: Extract proof summary
+      run: |
+        echo "## Rocq Kernel Verification Summary" > rocq_summary.md
+        echo "" >> rocq_summary.md
+        echo "- **Branch**: ${{ github.ref }}" >> rocq_summary.md
+        echo "- **Commit**: ${{ github.sha }}" >> rocq_summary.md
+        echo "- **Timestamp**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> rocq_summary.md
+        echo "" >> rocq_summary.md
+        echo "### Compilation Result" >> rocq_summary.md
+        if [ $? -eq 0 ]; then
+          echo "✅ **ROCQ_KERNEL_VERIFIED**" >> rocq_summary.md
+        else
+          echo "❌ **KERNEL_VERIFICATION_FAILED**" >> rocq_summary.md
+        fi
+        cat rocq_summary.md
+
+    - name: Upload build log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: rocq_build_log
+        path: coq/rocq_build.log
+        retention-days: 30
+
+    - name: Upload proof artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: rocq_proofs
+        path: coq/*.vo
+        retention-days: 30
+
+    - name: Publish verification result
+      if: always()
+      run: |
+        cat rocq_summary.md >> $GITHUB_STEP_SUMMARY

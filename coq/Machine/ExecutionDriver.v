@@ -1,8 +1,9 @@
 (* PH1.S4 — Execution Driver (Non-recursive loop)
    From SKC-LISP-WORLD-COQ-001 <execution-driver> *)
 
-Require Import Coq.Lists.List Coq.Nat.Nat.
-Require Import StepRelation.
+Require Import Coq.Lists.List.
+Require Import Coq.Arith.Arith.
+Require Import Machine.StepRelation.
 
 (* Fuel-bounded runner (for proof) *)
 Fixpoint run_fuel (fuel : nat) (state : string) : step_result :=

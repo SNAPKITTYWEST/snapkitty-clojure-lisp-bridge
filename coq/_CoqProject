@@ -1,0 +1,26 @@
+-R World World
+-R Machine Machine
+-R Mutation Mutation
+-R Dump Dump
+-R Proofs Proofs
+-arg -w -arg -notation-overridden
+-arg -w -arg -redundant-pattern-matching
+
+World/ObjectKinds.v
+Machine/State.v
+Machine/StepRelation.v
+Machine/StepFunction.v
+Machine/Execution.v
+Mutation/Event.v
+Mutation/Validation.v
+Mutation/Journal.v
+Mutation/Replay.v
+Mutation/Rollback.v
+Dump/Bytes.v
+Dump/Canonical.v
+Dump/Encode.v
+Dump/Decode.v
+Dump/Validate.v
+Dump/RoundTrip.v
+Proofs/Theorems.v
+Proofs/Preservation.v

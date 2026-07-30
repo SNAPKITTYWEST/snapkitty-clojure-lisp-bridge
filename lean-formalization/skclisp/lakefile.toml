@@ -1,0 +1,10 @@
+name = "skclisp"
+version = "0.1.0"
+defaultTargets = ["skclisp"]
+
+[[lean_lib]]
+name = "Skclisp"
+
+[[lean_exe]]
+name = "skclisp"
+root = "Main"

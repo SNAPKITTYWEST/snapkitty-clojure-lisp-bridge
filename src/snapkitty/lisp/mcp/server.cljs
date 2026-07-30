@@ -6,7 +6,8 @@
             [snapkitty.lisp.mcp.config :as config]
             [snapkitty.lisp.mcp.tools :as tools]
             [snapkitty.lisp.mcp.util :as util]
-            [snapkitty.lisp.knowledge.qdrant :as qdrant]))
+            [snapkitty.lisp.knowledge.qdrant :as qdrant]
+            [snapkitty.lisp.native :as native]))
 
 (defn start! []
   "Start MCP server on stdio transport"
@@ -19,12 +20,17 @@
 
     (p/let [_ (qdrant/ensure-collection! cfg)]
       (util/log "[snapkitty-lisp] Collection ready")
-      (tools/register-tools! mcp-server cfg)
-      (util/log "[snapkitty-lisp] Tools registered")
 
-      (let [transport (StdioServerTransport.)]
-        (p/let [_ (.connect mcp-server transport)]
-          (util/log "[snapkitty-lisp] MCP server ready on stdio"))))))
+      ; Load native ASM library
+      (p/let [_ (native/load-native-library! "./native/build/Release/skclisp_native.node")]
+        (util/log "[snapkitty-lisp] Native ASM library loaded")
+
+        (tools/register-tools! mcp-server cfg)
+        (util/log "[snapkitty-lisp] Tools registered")
+
+        (let [transport (StdioServerTransport.)]
+          (p/let [_ (.connect mcp-server transport)]
+            (util/log "[snapkitty-lisp] MCP server ready on stdio"))))))))
 
 ;; Node.js entry point
 (set! (.-default js/module.exports) start!)
