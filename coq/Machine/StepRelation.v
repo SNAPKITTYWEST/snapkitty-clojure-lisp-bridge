@@ -62,17 +62,6 @@ Proof.
   intros s r H.
   exact H.
 Qed.
-   From SKC-LISP-WORLD-COQ-001 <step-result> *)
-
-Require Import Coq.Lists.List.
-Require Import Instruction.
-
-(* Step result — outcomes of a single machine transition *)
-Inductive step_result : Type :=
-  | Stepped (s : string)           (* Continue with new state *)
-  | Emitted (obs : string) (s : string)  (* Observable + new state *)
-  | Requested (req : string) (s : string) (* Effect request *)
-  | HaltedWith (v : string) (s : string) (* Value + final state *)
   | TrappedWith (err : string) (s : string). (* Error + final state *)
 
 (* Relational step semantics *)
