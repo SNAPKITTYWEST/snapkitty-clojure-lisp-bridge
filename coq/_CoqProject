@@ -1,0 +1,17 @@
+-Q . SKC
+-arg -w -arg -notation-overridden
+-arg -w -arg -redundant-pattern-matching
+
+World/ObjectKinds.v
+World/World.v
+Machine/Instruction.v
+Machine/State.v
+Machine/StepRelation.v
+Machine/ExecutionDriver.v
+Mutation/Event.v
+Mutation/Operations.v
+Dump/Format.v
+Dump/RoundTrip.v
+Capability/Kinds.v
+Capability/CapabilityModel.v
+Proofs/Theorems.v
