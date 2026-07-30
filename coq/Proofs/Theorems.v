@@ -3,6 +3,7 @@ Require Import Coq.Lists.List.
 Require Import Coq.Arith.Arith.
 Require Import Coq.ZArith.ZArith.
 Require Import Coq.Strings.String.
+Require Import Coq.omega.Omega.
 Require Import World.ObjectKinds.
 Require Import Machine.State.
 

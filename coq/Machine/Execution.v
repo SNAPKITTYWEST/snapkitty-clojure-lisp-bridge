@@ -3,6 +3,7 @@ Require Import Coq.Init.Prelude.
 Require Import Coq.Lists.List.
 Require Import Coq.Arith.Arith.
 Require Import Coq.Strings.String.
+Require Import Coq.omega.Omega.
 Require Import Machine.State.
 Require Import Machine.StepRelation.
 
