@@ -12,7 +12,7 @@
 
 ## SYSTEM ARCHITECTURE
 
-![GRISP Shadow Arena](ARCHITECTURE.svg)
+![GRISP Shadow Arena - Lisp Machine Development Environment](grisp-shadow.svg)
 
 ---
 
