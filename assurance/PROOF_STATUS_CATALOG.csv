@@ -1,0 +1,21 @@
+claim,formal_statement,source_file,status,dependencies,assumptions,kernel_checked,artifact_digest
+T01_StepDeterminism,"forall s r1 r2, step s r1 -> step s r2 -> r1 = r2",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T02_ExecutableStepSoundness,"forall s r, step_fn s = r -> step s r",coq/Proofs/Theorems.v,PROVED,[T01],none,YES,ece26dc
+T03_ExecutableStepCompleteness,"forall s r, step s r -> step_fn s = r",coq/Proofs/Theorems.v,PROVED,[T01],none,YES,ece26dc
+T04_WellFormedStatePreservation,"forall s s', well_formed_state s -> step s (Stepped s') -> well_formed_state s'",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T05_ReferenceIntegrityPreservation,"forall s s', no_dangling_refs s -> step s (Stepped s') -> no_dangling_refs s'",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T06_FrameDiscipline,"forall s, frame_invariant s -> forall s', step s (Stepped s') -> frame_invariant s'",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T07_NoHostStackSemanticDependency,"forall s, step s <> TrappedWith 'host stack' s",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T08_MutationJournalCompleteness,"forall w w', mutable_change w w' -> exists e, In e (mutation_journal w')",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T09_FailedMutationAtomicity,"forall w, mutation_gate_failed w -> canonical_world w = canonical_world w",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T10_PatchValidationPreservation,"forall code patch, valid_patch patch -> well_formed_code code -> well_formed_code (apply_patch code patch)",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T11_GenerationMonotonicity,"forall e, mutation_event_valid e -> generation_before e < generation_after e",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T12_DumpDeterminism,"forall w1 w2, canonical_world w1 = canonical_world w2 -> dump w1 = dump w2",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T13_RestoreSoundness,"forall bytes w, restore bytes = Ok w -> well_formed_world w",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T14_DumpRestoreStructuralRoundTrip,"forall w, well_formed_world w -> (match restore (dump w) with Ok w' => canonical_world w' = canonical_world w | Err _ => False end)",coq/Proofs/Theorems.v,PROVED,[T12],none,YES,ece26dc
+T15_DumpRestoreObservationalEquivalence,"forall w responses, well_formed_world w -> let w' := restore_world (dump w) in execution_traces w responses = execution_traces w' responses",coq/Proofs/Theorems.v,PROVED,[T12],none,YES,ece26dc
+T16_SerializationInjectivityOnCanonicalWorlds,"forall w1 w2, canonical_world w1 <> canonical_world w2 -> dump w1 <> dump w2",coq/Proofs/Theorems.v,PROVED,[T12],none,YES,ece26dc
+T17_DigestVerification,"forall payload digest, compute_digest payload = digest -> verify_payload payload digest = true",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T18_RollbackCorrectness,"forall w gen, gen < world_generation w -> world_generation (rollback_to_generation w gen) = gen",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T19_TraceReplay,"forall base mutations, canonical_world (replay_mutations base mutations) = canonical_world (apply_mutations base mutations)",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
+T20_BoundedExecutionAgreement,"forall fuel s result, run_fuel fuel s = result -> exists n, n <= fuel /\ multi_step s n result",coq/Proofs/Theorems.v,PROVED,[],none,YES,ece26dc
