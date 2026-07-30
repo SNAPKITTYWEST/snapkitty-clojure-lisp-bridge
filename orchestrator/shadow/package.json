@@ -1,0 +1,25 @@
+{
+  "name": "@snapkitty/agentic-arena",
+  "version": "1.0.0",
+  "description": "The graveyard. Sovereign daemons crawl GitHub at night and report to BOB.",
+  "type": "module",
+  "bin": {
+    "arena": "./runtime/cli/index.mjs"
+  },
+  "scripts": {
+    "crawl":       "node runtime/cli/index.mjs crawl",
+    "crawl:red":   "node runtime/cli/index.mjs crawl --red",
+    "crawl:blue":  "node runtime/cli/index.mjs crawl --blue",
+    "report":      "node runtime/cli/index.mjs report",
+    "status":      "node runtime/cli/index.mjs status",
+    "seal":        "node runtime/cli/index.mjs seal"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.0",
+    "nats":          "^2.18.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "Apache-2.0"
+}

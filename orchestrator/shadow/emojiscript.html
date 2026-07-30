@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ahmad's EmojiScript — GRISP Shadow Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e27;
+      color: #e0e6ff;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1, h2 { color: #a0aeff; margin: 20px 0 10px; }
+    h1 { font-size: 28px; border-bottom: 2px solid #4a5f9f; padding-bottom: 10px; }
+    h2 { font-size: 18px; margin-top: 30px; }
+
+    .section {
+      background: #0f1629;
+      border-left: 3px solid #4a5f9f;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .editor {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .editor-pane {
+      background: #050811;
+      border: 1px solid #2a3f5f;
+      border-radius: 4px;
+      padding: 15px;
+    }
+
+    .editor-pane h3 {
+      color: #7a8fff;
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      background: #000;
+      color: #33ff33;
+      border: 1px solid #1a4a1a;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      border-radius: 3px;
+      resize: vertical;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #2a3f7f;
+      color: #e0e6ff;
+      border: 1px solid #4a5f9f;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #3a4f9f;
+      border-color: #6a7fff;
+      box-shadow: 0 0 10px rgba(106, 127, 255, 0.3);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .result-box {
+      background: #000;
+      border: 1px solid #1a4a1a;
+      color: #33ff33;
+      padding: 15px;
+      border-radius: 3px;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 100px;
+    }
+
+    .error {
+      background: #2a0a0a;
+      border-color: #8a2a2a;
+      color: #ff6666;
+    }
+
+    .success {
+      background: #0a2a0a;
+      border-color: #2a8a2a;
+      color: #66ff66;
+    }
+
+    .instruction-list {
+      background: #050811;
+      border: 1px solid #1a3a5f;
+      padding: 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 10px 0;
+    }
+
+    .instruction {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px;
+      border-bottom: 1px solid #0f2a3f;
+    }
+
+    .instruction:last-child { border-bottom: none; }
+    .instruction-op { color: #7a8fff; font-weight: bold; }
+    .instruction-arg { color: #a0aeff; }
+
+    .reference {
+      background: #0f1629;
+      border-left: 3px solid #4a5f9f;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .reference code {
+      background: #000;
+      color: #66ff66;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #1a3a5f;
+    }
+
+    th { color: #7a8fff; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧬 Ahmad's EmojiScript — GRISP Shadow Arena</h1>
+
+  <div class="section">
+    <p>Bytecode dialect compiled to SigilOp instructions. Fast-path validation for the Lisp Machine runtime. 15 emoji opcodes, stack-based VM, deterministic execution.</p>
+  </div>
+
+  <h2>Live Compiler + Executor</h2>
+
+  <div class="editor">
+    <div class="editor-pane">
+      <h3>📝 EmojiScript Source</h3>
+      <textarea id="source" placeholder="🔢40 🔢2 ➕ ↩️">🔢40 🔢2 ➕ ↩️</textarea>
+      <div class="button-group">
+        <button onclick="compile()">⚙️ Compile</button>
+        <button onclick="execute()">▶️ Execute</button>
+        <button onclick="clear_all()">🧹 Clear</button>
+      </div>
+    </div>
+
+    <div class="editor-pane">
+      <h3>📊 Result</h3>
+      <div id="result" class="result-box">Ready...</div>
+      <div class="instruction-list" id="bytecode"></div>
+    </div>
+  </div>
+
+  <h2>Instruction Reference</h2>
+
+  <div class="section">
+    <h3>Stack Operations</h3>
+    <table>
+      <tr>
+        <th>Emoji</th>
+        <th>Name</th>
+        <th>Effect</th>
+      </tr>
+      <tr>
+        <td><code>🔢&lt;digits&gt;</code></td>
+        <td>Push</td>
+        <td>Push i64 literal onto stack</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Arithmetic Operators</h3>
+    <table>
+      <tr>
+        <th>Emoji</th>
+        <th>Name</th>
+        <th>Effect</th>
+      </tr>
+      <tr><td>➕</td><td>Add</td><td>Pop 2, push sum</td></tr>
+      <tr><td>➖</td><td>Sub</td><td>Pop 2, push difference</td></tr>
+      <tr><td>✖️</td><td>Mul</td><td>Pop 2, push product</td></tr>
+      <tr><td>➗</td><td>Div</td><td>Pop 2, push quotient</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Bitwise Operators</h3>
+    <table>
+      <tr>
+        <th>Emoji</th>
+        <th>Name</th>
+        <th>Effect</th>
+      </tr>
+      <tr><td>🤝</td><td>And</td><td>Bitwise AND</td></tr>
+      <tr><td>👐</td><td>Or</td><td>Bitwise OR</td></tr>
+      <tr><td>🌀</td><td>Xor</td><td>Bitwise XOR</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Control Flow</h3>
+    <table>
+      <tr>
+        <th>Emoji</th>
+        <th>Name</th>
+        <th>Args</th>
+        <th>Effect</th>
+      </tr>
+      <tr><td>➡️</td><td>Jump</td><td>target</td><td>Unconditional jump to PC</td></tr>
+      <tr><td>❓</td><td>JumpIf</td><td>target</td><td>Jump if TOS ≠ 0, pop predicate</td></tr>
+      <tr><td>↩️</td><td>Return</td><td>—</td><td>Halt execution</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Advanced (Future)</h3>
+    <table>
+      <tr>
+        <th>Emoji</th>
+        <th>Name</th>
+        <th>Purpose</th>
+      </tr>
+      <tr><td>🔑</td><td>CapGate</td><td>Capability proof (pops 2 args)</td></tr>
+      <tr><td>⚡</td><td>Call</td><td>Indirect function call</td></tr>
+      <tr><td>🏗️</td><td>Alloc</td><td>Allocate memory</td></tr>
+      <tr><td>📤</td><td>Load</td><td>Load from memory</td></tr>
+      <tr><td>📦</td><td>Store</td><td>Store to memory</td></tr>
+    </table>
+  </div>
+
+  <h2>Examples</h2>
+
+  <div class="reference">
+    <strong>Arithmetic:</strong><br>
+    <code>🔢40 🔢2 ➕ ↩️</code> → 42<br>
+    <code>🔢100 🔢40 ➖ ↩️</code> → 60<br>
+    <code>🔢6 🔢7 ✖️ ↩️</code> → 42
+  </div>
+
+  <div class="reference">
+    <strong>Bitwise:</strong><br>
+    <code>🔢15 🔢7 🤝 ↩️</code> → 7 (AND: 1111 & 0111 = 0111)<br>
+    <code>🔢12 🔢5 👐 ↩️</code> → 13 (OR: 1100 | 0101 = 1101)
+  </div>
+
+  <div class="reference">
+    <strong>Control:</strong><br>
+    <code>🔢1 ❓ ↩️</code> → jump if predicate<br>
+    <code>🔢0 ➡️</code> → infinite loop
+  </div>
+</div>
+
+<script>
+// ── Simplified EmojiScript interpreter (stub for Web) ──────────────────────
+
+async function compile() {
+  const source = document.getElementById('source').value.trim();
+  const result = document.getElementById('result');
+  const bytecode = document.getElementById('bytecode');
+
+  if (!source) {
+    result.textContent = '❌ No source code';
+    result.className = 'result-box error';
+    return;
+  }
+
+  try {
+    // Stub: parse emoji tokens
+    const tokens = source.split(/\s+/).filter(t => t);
+    const ops = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const tok = tokens[i];
+      if (tok === '🔢') {
+        // Next token should be digits
+        const digits = tokens[++i];
+        ops.push({ op: 'Push', value: parseInt(digits) });
+      } else if (tok === '➕') {
+        ops.push({ op: 'Add' });
+      } else if (tok === '➖') {
+        ops.push({ op: 'Sub' });
+      } else if (tok === '✖️' || tok === '✖') {
+        ops.push({ op: 'Mul' });
+      } else if (tok === '➗') {
+        ops.push({ op: 'Div' });
+      } else if (tok === '🤝') {
+        ops.push({ op: 'And' });
+      } else if (tok === '👐') {
+        ops.push({ op: 'Or' });
+      } else if (tok === '🌀') {
+        ops.push({ op: 'Xor' });
+      } else if (tok === '↩️' || tok === '↩') {
+        ops.push({ op: 'Ret' });
+      }
+    }
+
+    result.textContent = `✅ Compiled: ${ops.length} instructions`;
+    result.className = 'result-box success';
+
+    // Display bytecode
+    let html = '';
+    ops.forEach((op, i) => {
+      html += `<div class="instruction">
+        <span class="instruction-op">[${i}] ${op.op}</span>
+        ${op.value !== undefined ? `<span class="instruction-arg">${op.value}</span>` : ''}
+      </div>`;
+    });
+    bytecode.innerHTML = html;
+  } catch (e) {
+    result.textContent = `❌ ${e.message}`;
+    result.className = 'result-box error';
+  }
+}
+
+function execute() {
+  const source = document.getElementById('source').value.trim();
+  const result = document.getElementById('result');
+
+  if (!source) {
+    result.textContent = '❌ No source code';
+    result.className = 'result-box error';
+    return;
+  }
+
+  try {
+    const stack = [];
+    const tokens = source.split(/\s+/).filter(t => t);
+    let i = 0;
+
+    while (i < tokens.length) {
+      const tok = tokens[i];
+      if (tok === '🔢') {
+        stack.push(parseInt(tokens[++i]));
+      } else if (tok === '➕') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a + b);
+      } else if (tok === '➖') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a - b);
+      } else if (tok === '✖️' || tok === '✖') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a * b);
+      } else if (tok === '➗') {
+        const b = stack.pop(), a = stack.pop();
+        if (b === 0) throw new Error('Division by zero');
+        stack.push(Math.floor(a / b));
+      } else if (tok === '🤝') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a & b);
+      } else if (tok === '👐') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a | b);
+      } else if (tok === '🌀') {
+        const b = stack.pop(), a = stack.pop();
+        stack.push(a ^ b);
+      } else if (tok === '↩️' || tok === '↩') {
+        break;
+      }
+      i++;
+    }
+
+    const value = stack[stack.length - 1];
+    result.textContent = `✅ Result: ${value}\nStack: [${stack.join(', ')}]`;
+    result.className = 'result-box success';
+  } catch (e) {
+    result.textContent = `❌ Runtime: ${e.message}`;
+    result.className = 'result-box error';
+  }
+}
+
+function clear_all() {
+  document.getElementById('source').value = '';
+  document.getElementById('result').textContent = 'Ready...';
+  document.getElementById('result').className = 'result-box';
+  document.getElementById('bytecode').innerHTML = '';
+}
+
+// Auto-compile on load
+window.addEventListener('load', () => {
+  compile();
+});
+</script>
+
+</body>
+</html>
