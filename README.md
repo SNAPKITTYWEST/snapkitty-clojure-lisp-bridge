@@ -1,11 +1,11 @@
 # SNAPKITTY CLOJURE LISP BRIDGE
 
-> **Complete production-grade integration: Ahmad's EmojiScript bytecode language + hardware-accelerated NASM validators + Node.js native binding + Lisp Machine CLI + GRISP Shadow Arena browser IDE**
+> **ClojureScript semantic knowledge engine: Compile LISP → knowledge graphs, embed via ONNX, search via Qdrant, expose via MCP protocol. Unified world bridge for McCarthy-1958 LISP, AppleSoft LISP, and Ahmad's EmojiScript bytecode dialect.**
 
 **Status:** ✅ PRODUCTION v1.1.0 (2026-07-30)  
-**What's Built:** EmojiScript VM (15 opcodes) • NASM validators (mutation gate + Blake3/Ed25519) • Native binding (Windows+Linux) • 8 MCP tools • Lisp Machine CLI • GRISP Shadow Arena • Complete test suite  
+**Core Architecture:** LISP compiler (ClojureScript) → semantic knowledge graphs → vector embeddings (ONNX) → Qdrant vector DB → MCP agent integration  
+**What's Built:** LISP reader + compiler • Semantic knowledge layer • Vector embeddings (SHA-256 verified) • Multi-source world registry • 8 MCP tools • EmojiScript bytecode VM • NASM cryptographic validators • Node.js native binding (Windows+Linux) • Lisp Machine CLI • Browser IDE • Complete test suite  
 **Repository:** https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge  
-**Branch:** `coq-kernel-recovery` (7 commits, 13,079 lines added)  
 **License:** Sovereign Source
 
 ---
@@ -16,11 +16,108 @@
 
 ---
 
+## HOW THE CLOJURE BRIDGE WORKS
+
+```
+LISP CODE (McCarthy, AppleSoft, EmojiScript)
+    ↓
+[ClojureScript Reader] — Lexical analysis, form parsing
+    ↓
+[Semantic Compiler] — LISP → knowledge graph (symbols, forms, types)
+    ↓
+[Knowledge Store] — Rate-limited ingestion, deduplication
+    ↓
+[ONNX Embeddings] — Convert semantics to vectors (SHA-256 verified)
+    ↓
+[Qdrant Vector DB] — Store + index embeddings
+    ↓
+[MCP Protocol] — Expose via agent-friendly tools
+    ↓
+AI AGENTS (Claude, other LLMs) — Query across all LISP worlds
+```
+
+**Why ClojureScript?**
+- First-class LISP semantics (reader, quoting, macros already built in)
+- Direct JavaScript compilation → Node.js target
+- Rich ecosystem (Zod validation, Promesa promises, etc.)
+
+**Why Semantic Knowledge Graphs?**
+- Each LISP form becomes a structured node (symbol, args, types, references)
+- Multi-dialect fusion: McCarthy-1958 + AppleSoft + EmojiScript in one searchable DB
+- Form-to-form semantic similarity via embeddings
+
+**Why Qdrant + ONNX?**
+- Qdrant: production vector DB with HTTP API, auth, scaling
+- ONNX: vendor-agnostic embeddings, deterministic, fast CPU inference
+- SHA-256 verification: reproducible embeddings across runs
+
+---
+
 ## WHAT'S IN THIS REPOSITORY
 
-This is a **unified monorepo** for the complete EmojiScript ecosystem:
+This is a **unified monorepo** for the complete ClojureScript LISP bridge ecosystem:
 
-### 1. Ahmad's EmojiScript Language
+### 1. ClojureScript LISP Reader & Compiler
+**Files:** `src/snapkitty/lisp/bridge/reader.cljs`, `src/snapkitty/lisp/bridge/compiler.cljs`
+
+Parses LISP code and compiles into structured knowledge graphs:
+- Lexical analysis (tokenization)
+- Form parsing (sexpr, symbols, literals)
+- Semantic compilation (type inference, reference tracking)
+- Multi-dialect support (McCarthy, AppleSoft, EmojiScript)
+
+```clojure
+(reader/read-lisp "(lambda (x) (* x x))")
+; => [(lambda (x) (* x x))]
+
+(compiler/compile-form '(* x x))
+; => {:type :sexpr :head *, :args [x x]}
+```
+
+---
+
+### 2. Semantic Knowledge Layer
+**Files:** `src/snapkitty/lisp/knowledge/*.cljs`
+
+- **store.cljs** — Document ingestion with rate limiting (10 docs/sec)
+- **embedding.cljs** — ONNX model integration (SHA-256 verified)
+- **qdrant.cljs** — Vector DB client (auth-enforced)
+- **chunking.cljs** — Text splitting for large forms
+
+Each LISP form is embedded as a vector and stored in Qdrant for semantic search.
+
+---
+
+### 3. Multi-Source World Registry
+**File:** `src/snapkitty/lisp/integration/world.cljs`
+
+Register LISP sources and consolidate into one searchable world:
+
+```clojure
+(world/register-world-source! "lisp-machine"
+  {:dialect "McCarthy-1958"
+   :path "/path/to/lisp-machine"})
+
+(world/list-world-sources)
+; => [{:name "lisp-machine", :dialect "McCarthy-1958", ...}]
+```
+
+---
+
+### 4. MCP Tools (8 Total)
+**File:** `src/snapkitty/lisp/mcp/tools.cljs`
+
+Expose knowledge base to AI agents:
+- `store_document` — Save LISP code + embeddings
+- `search` — Semantic similarity search
+- `delete_document` — Remove by ID
+- `validate_mutation` — Cryptographic gate (NASM)
+- `verify_blake3` — Blake3 verification
+- `verify_ed25519` — Ed25519 verification
+
+---
+
+### 5. Ahmad's EmojiScript Language
 **Files:** `src/snapkitty/lisp/emojiscript.cljs` (280 lines)
 
 A production-ready bytecode dialect with 15 emoji opcodes, compiler, stack-based VM, and error recovery.
