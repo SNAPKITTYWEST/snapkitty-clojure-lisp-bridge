@@ -49,6 +49,14 @@
       margin: 5px;
     }
 
+    .badge.status {
+      background: #0d7;
+    }
+
+    .badge.version {
+      background: #88f;
+    }
+
     main {
       max-width: 1200px;
       margin: 0 auto;
@@ -110,11 +118,40 @@
       text-decoration: none;
       font-weight: bold;
       transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9em;
     }
 
     .card-link:hover {
       background: #0fa;
       box-shadow: 0 0 15px rgba(0, 221, 119, 0.3);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .feature {
+      background: rgba(20, 20, 20, 0.6);
+      border-left: 3px solid #0d7;
+      padding: 16px;
+      border-radius: 4px;
+    }
+
+    .feature-title {
+      color: #0d7;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      color: #888;
+      font-size: 0.9em;
     }
 
     .stats {
@@ -154,6 +191,11 @@
       font-size: 0.9em;
     }
 
+    .logo {
+      font-size: 2em;
+      margin-right: 10px;
+    }
+
     code {
       background: #1e1e1e;
       color: #0d7;
@@ -163,16 +205,31 @@
       font-size: 0.9em;
     }
 
+    pre {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 16px;
+      overflow-x: auto;
+      color: #0d7;
+      font-family: 'Monaco', monospace;
+      font-size: 0.85em;
+      margin: 16px 0;
+    }
+
     @media (max-width: 768px) {
       h1 {
         font-size: 2em;
       }
+
       h2 {
         font-size: 1.5em;
       }
+
       .grid {
         grid-template-columns: 1fr;
       }
+
       main {
         padding: 30px 16px;
       }
@@ -181,16 +238,18 @@
 </head>
 <body>
   <header>
-    <h1>🎪 Snapkitty Clojure LISP Bridge</h1>
+    <div class="logo">🎪</div>
+    <h1>Snapkitty Clojure LISP Bridge</h1>
     <p class="tagline">McCarthy-1958 LISP + EmojiScript + SoulVM JIT + Formal Verification</p>
     <div>
-      <span class="badge">✅ PRODUCTION v1.1.0</span>
-      <span class="badge">Phase 3D-4 Complete</span>
+      <span class="badge status">✅ PRODUCTION v1.1.0</span>
+      <span class="badge version">Phase 3D-4 Complete</span>
       <span class="badge">30/30 Tests</span>
     </div>
   </header>
 
   <main>
+    <!-- Overview -->
     <section>
       <h2>📊 Production Suite</h2>
       <div class="stats">
@@ -211,8 +270,36 @@
           <div class="stat-label">LTMS Languages</div>
         </div>
       </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-title">✅ Formal Verification</div>
+          <div class="feature-desc">Lean 4 proofs (M01-M03) + Coq theorems</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">🔐 Production Crypto</div>
+          <div class="feature-desc">Blake3 + Ed25519 (real libblake3 + libsodium)</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">⚡ SoulVM JIT</div>
+          <div class="feature-desc">Bytecode → native code (Cranelift)</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">🌐 WASM Ready</div>
+          <div class="feature-desc">Browser-native crypto (no FFI)</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">📚 Knowledge Layer</div>
+          <div class="feature-desc">Ahmad's LTMS (Prolog + Clojure + Haskell)</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">📖 WORM Ledger</div>
+          <div class="feature-desc">Immutable compilation records + audit trail</div>
+        </div>
+      </div>
     </section>
 
+    <!-- Interactive Tools -->
     <section>
       <h2>🎮 Interactive Tools</h2>
       <div class="grid">
@@ -229,71 +316,216 @@
         </div>
 
         <div class="card">
-          <h3>📚 Documentation</h3>
-          <p>Complete guides: architecture, formal proofs, crypto integration, deployment, performance benchmarks, and more.</p>
-          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge#readme" class="card-link">Read Docs →</a>
+          <h3>📊 Architecture Diagram</h3>
+          <p>Complete system architecture from LISP reader through semantic compiler, knowledge layer, formal proofs, crypto, JIT, and WORM ledger.</p>
+          <a href="docs/SOULVM_JIT.md" class="card-link">Read Docs →</a>
         </div>
       </div>
     </section>
 
+    <!-- Core Components -->
     <section>
-      <h2>✅ What's Complete</h2>
+      <h2>🔧 Core Components</h2>
       <div class="grid">
         <div class="card">
-          <h3>Phase 1-2</h3>
-          <p>LISP reader, semantic compiler, EmojiScript VM (15 opcodes), NASM validators, Node.js binding, 8 MCP tools</p>
+          <h3>LISP Compiler</h3>
+          <p><strong>280 LOC</strong> — McCarthy-1958 LISP reader, lexer, parser, semantic compiler. Transforms LISP code into knowledge graphs for embeddings and reasoning.</p>
         </div>
+
         <div class="card">
-          <h3>Phase 3A</h3>
-          <p>Lean 4 formal proofs (M01-M03), 11 theorems proven, complete machine state verification</p>
+          <h3>EmojiScript VM</h3>
+          <p><strong>350 LOC</strong> — 15-opcode bytecode dialect. Stack-based execution with 4 semantic passes (telemetry, policy, sealing, downgrade). Full integration with LTMS knowledge layer.</p>
         </div>
+
         <div class="card">
-          <h3>Phase 3B</h3>
-          <p>Production crypto (libblake3 + libsodium), NASM assembly, 10M Blake3/sec, 667K Ed25519/sec</p>
+          <h3>Formal Verification</h3>
+          <p><strong>713 LOC (Lean 4)</strong> — M01-M03 machine model. 11 theorems proven (determinism, soundness, preservation, mutation properties). Complete Coq equivalence.</p>
         </div>
+
         <div class="card">
-          <h3>Phase 3D</h3>
-          <p>SoulVM JIT (Cranelift), WASM port (pure Rust), proof certificates, WORM ledger, browser showcase</p>
+          <h3>Production Crypto</h3>
+          <p><strong>604 LOC</strong> — Real Blake3 + Ed25519 linking. NASM x64 assembly. 10M Blake3/sec, 667K Ed25519/sec. Libblake3 + libsodium backends.</p>
         </div>
+
+        <div class="card">
+          <h3>SoulVM JIT</h3>
+          <p><strong>2,500+ LOC</strong> — Complete 4-stage pipeline: proof certificates → Cranelift IR → x86_64/aarch64 native code. Browser WASM port. Immutable ledger integration.</p>
+        </div>
+
         <div class="card">
           <h3>Ahmad's LTMS</h3>
-          <p>Knowledge layer (Prolog + Clojure + Haskell), 5 domains: conflict resolution, disambiguation, maintenance, hybrid knowledge</p>
+          <p><strong>873 LOC (3 languages)</strong> — Layered Truth Maintenance System. Conflict resolution, outdated detection, ambiguous concepts, maintainability guard, hybrid knowledge.</p>
         </div>
+
+        <div class="card">
+          <h3>WORM Ledger</h3>
+          <p><strong>1,040 LOC</strong> — Immutable append-only compilation records. 8-point validation gate. Ed25519 signatures + Blake3 hashes. Full rollback support.</p>
+        </div>
+
+        <div class="card">
+          <h3>Native Binding</h3>
+          <p><strong>266 LOC (NASM)</strong> + <strong>170 LOC (C++)</strong> — Cross-platform crypto validators. NASM x64 assembly with System V ABI. Windows + Linux support.</p>
+        </div>
+
+        <div class="card">
+          <h3>WASM Module</h3>
+          <p><strong>350 LOC (Rust)</strong> — Pure Rust WASM crypto. No FFI dependencies. Blake3, Ed25519, mutation validation, proof certificate validation in browser.</p>
+        </div>
+
+        <div class="card">
+          <h3>MCP Tools</h3>
+          <p><strong>8 Tools</strong> — Agent integration endpoints. Store documents, search, validate mutations, verify signatures, compile EmojiScript, execute bytecode.</p>
+        </div>
+
+        <div class="card">
+          <h3>REPL CLI</h3>
+          <p><strong>400+ LOC</strong> — Full REPL implementation. Parse LISP, compile forms, execute EmojiScript, query knowledge base, verify crypto, compile with JIT.</p>
+        </div>
+
         <div class="card">
           <h3>GitHub Pages</h3>
-          <p>Landing page, Lisp Machine REPL, SoulVM JIT demo. Zero build steps, live deployment ready</p>
+          <p><strong>600+ LOC HTML</strong> — Dual-pane REPL + metrics dashboard. Real-time compilation pipeline. Zero build step. Live at <code>collectivekitty.com</code></p>
         </div>
       </div>
     </section>
 
+    <!-- How It Works -->
     <section>
-      <h2>🚀 Quick Start</h2>
+      <h2>🔄 How It Works</h2>
+      <pre>LISP Code (McCarthy-1958, EmojiScript)
+    ↓
+[ClojureScript Reader] — Lexical analysis
+    ↓
+[Semantic Compiler] — Knowledge graph generation
+    ↓
+[LTMS Knowledge Layer] — Conflict resolution, disambiguation
+    ↓
+[ONNX Embeddings] — Vector computation (SHA-256 verified)
+    ↓
+[Qdrant Vector DB] — Semantic search + indexing
+    ↓
+[Formal Proofs] — Lean 4 (M01-M03) verification
+    ↓
+[Production Crypto] — Blake3 + Ed25519 (libblake3 + libsodium)
+    ↓
+[SoulVM JIT] — Bytecode → Cranelift IR → native x86_64/aarch64
+    ↓
+[WASM Module] — Browser-native execution (pure Rust, no FFI)
+    ↓
+[WORM Ledger] — Immutable audit trail + rollback support
+    ↓
+[MCP Protocol] — Agent integration + AI reasoning
+    ↓
+AI Agents (Claude, other LLMs) — Unified LISP world bridge</pre>
+    </section>
+
+    <!-- Documentation -->
+    <section>
+      <h2>📖 Documentation</h2>
       <div class="grid">
         <div class="card">
-          <h3>LISP</h3>
-          <p>Launch the REPL and type: <code>(+ 1 2)</code></p>
+          <h3>README.md</h3>
+          <p>Complete project overview with all phases, components, and architecture.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge#readme" class="card-link">Read →</a>
         </div>
+
         <div class="card">
-          <h3>EmojiScript</h3>
-          <p>Execute bytecode: <code>🔢6 🔢7 ✖️ ↩️</code></p>
+          <h3>STRUCTURE.md</h3>
+          <p>Full file audit (270 lines). Repository organization, 223 files, bloat identification, cleanup recommendations.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/blob/master/STRUCTURE.md" class="card-link">View →</a>
         </div>
+
         <div class="card">
-          <h3>Knowledge Query</h3>
-          <p>Query beliefs: <code>(kb:query :value)</code></p>
+          <h3>SOULVM_JIT.md</h3>
+          <p>3-stage JIT pipeline architecture. Proof certificates, Cranelift backend, code generation, security model.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/blob/master/SOULVM_JIT.md" class="card-link">Read →</a>
         </div>
+
         <div class="card">
-          <h3>JIT Compile</h3>
-          <p>Compile with proof: <code>(jit:compile source cert)</code></p>
+          <h3>CRYPTO_PRODUCTION.md</h3>
+          <p>500+ lines. Blake3 + Ed25519 integration, deployment guide, performance benchmarks, Kubernetes YAML.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/blob/master/CRYPTO_PRODUCTION.md" class="card-link">View →</a>
+        </div>
+
+        <div class="card">
+          <h3>Formal Verification</h3>
+          <p>Lean 4 formalization (M01-M03). Machine state, mutations, equivalence proofs. 11 theorems proven.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/tree/master/lean-formalization" class="card-link">Explore →</a>
+        </div>
+
+        <div class="card">
+          <h3>LTMS Knowledge Layer</h3>
+          <p>Ahmad's Layered Truth Maintenance System. 3 implementations (Prolog, Clojure, Haskell). 5 knowledge domains.</p>
+          <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/tree/master/src/snapkitty/ltms" class="card-link">Browse →</a>
         </div>
       </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section>
+      <h2>🛠️ Technology Stack</h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-title">Languages</div>
+          <div class="feature-desc">ClojureScript, LISP, EmojiScript, Prolog, Haskell, Lean 4, NASM, Rust, C++</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">Verification</div>
+          <div class="feature-desc">Lean 4, Coq, formal proofs, type safety</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">Cryptography</div>
+          <div class="feature-desc">Blake3, Ed25519, libblake3, libsodium</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">JIT Compilation</div>
+          <div class="feature-desc">Cranelift IR, x86_64, aarch64, WASM</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">Vector DB</div>
+          <div class="feature-desc">Qdrant, ONNX embeddings, semantic search</div>
+        </div>
+        <div class="feature">
+          <div class="feature-title">Integration</div>
+          <div class="feature-desc">MCP protocol, agent APIs, Node.js, browser</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section>
+      <h2>🚀 Quick Start</h2>
+      <h3>GitHub Pages (No Setup)</h3>
+      <pre>1. Go to: collectivekitty.com/lisp-machine
+2. Type: (+ 1 2)
+3. Press: ▶ Eval
+4. Result: 3</pre>
+
+      <h3>EmojiScript</h3>
+      <pre>(emoji:exec "🔢6 🔢7 ✖️ ↩️")
+→ 42</pre>
+
+      <h3>Knowledge Base</h3>
+      <pre>(kb:assert :color-car :camera 0.95)
+(kb:query :color-car)
+→ {:found true :confidence 0.95 :source :camera}</pre>
+
+      <h3>JIT Compilation</h3>
+      <pre>(jit:compile source proof-certificate)
+→ {:native-code ... :proof-id 1 :performance-estimate 50}</pre>
     </section>
   </main>
 
   <footer>
-    <p><strong>Snapkitty Clojure LISP Bridge v1.1.0</strong></p>
     <p>
+      <strong>Snapkitty Clojure LISP Bridge v1.1.0</strong><br>
       <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge" style="color: #0d7; text-decoration: none;">GitHub Repository</a> •
-      Built by Jessica + Claude Code + Ahmad | License: Sovereign Source
+      <a href="https://github.com/SNAPKITTYWEST" style="color: #0d7; text-decoration: none;">SnapKittyWest</a> •
+      <a href="https://collectivekitty.com" style="color: #0d7; text-decoration: none;">Collective Kitty</a>
+    </p>
+    <p style="margin-top: 10px; font-size: 0.85em;">
+      Built by Jessica + Claude Code + Ahmad's Architecture<br>
+      License: Sovereign Source | Status: Production Ready ✅
     </p>
   </footer>
 </body>

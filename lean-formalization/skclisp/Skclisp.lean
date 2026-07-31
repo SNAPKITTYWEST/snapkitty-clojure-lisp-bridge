@@ -1,3 +1,6 @@
 -- This module serves as the root of the `Skclisp` library.
 -- Import modules here that should be built as part of the library.
 import Skclisp.Basic
+import Skclisp.Machine
+import Skclisp.Mutation
+import Skclisp.Equivalence

@@ -5,28 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SoulVM JIT: Interactive Showcase</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Monaco', 'Menlo', monospace;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
       background: linear-gradient(135deg, #1e1e1e 0%, #2d2d30 100%);
       color: #d4d4d4;
       min-height: 100vh;
       padding: 20px;
     }
+
     header {
       max-width: 1200px;
       margin: 0 auto 40px;
       text-align: center;
     }
+
     h1 {
       font-size: 2.5em;
       color: #0d7;
       margin-bottom: 10px;
       text-shadow: 0 0 20px rgba(0, 221, 119, 0.3);
     }
-    .subtitle { font-size: 1.1em; color: #888; margin-bottom: 20px; }
-    .status { display: inline-block; padding: 8px 16px; background: #333; border-radius: 4px; border-left: 3px solid #0d7; }
-    .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .subtitle {
+      font-size: 1.1em;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #333;
+      border-radius: 4px;
+      border-left: 3px solid #0d7;
+      font-size: 0.9em;
+    }
+
+    .status.loading {
+      border-left-color: #f0a;
+    }
+
+    .status.error {
+      border-left-color: #f44;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
     .panel {
       background: #2d2d30;
       border: 1px solid #444;
@@ -34,7 +70,15 @@
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
-    .panel h2 { color: #0d7; font-size: 1.2em; margin-bottom: 15px; border-bottom: 2px solid #0d7; padding-bottom: 10px; }
+
+    .panel h2 {
+      color: #0d7;
+      font-size: 1.2em;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #0d7;
+      padding-bottom: 10px;
+    }
+
     textarea {
       width: 100%;
       height: 200px;
@@ -43,13 +87,24 @@
       border: 1px solid #444;
       border-radius: 4px;
       padding: 12px;
-      font-family: monospace;
+      font-family: 'Monaco', monospace;
       font-size: 0.95em;
       resize: none;
       outline: none;
+      transition: border-color 0.3s;
     }
-    textarea:focus { border-color: #0d7; box-shadow: 0 0 10px rgba(0, 221, 119, 0.2); }
-    .button-group { display: flex; gap: 10px; margin-top: 15px; }
+
+    textarea:focus {
+      border-color: #0d7;
+      box-shadow: 0 0 10px rgba(0, 221, 119, 0.2);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
     button {
       flex: 1;
       padding: 12px 20px;
@@ -62,8 +117,25 @@
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s;
+      text-transform: uppercase;
     }
-    button:hover { background: #0fa; box-shadow: 0 0 15px rgba(0, 221, 119, 0.4); }
+
+    button:hover {
+      background: #0fa;
+      box-shadow: 0 0 15px rgba(0, 221, 119, 0.4);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #666;
+      color: #999;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
     #output {
       min-height: 150px;
       background: #1e1e1e;
@@ -72,40 +144,147 @@
       padding: 12px;
       font-size: 0.85em;
       line-height: 1.6;
-      color: #0d7;
       white-space: pre-wrap;
       word-wrap: break-word;
+      color: #0d7;
       max-height: 300px;
       overflow-y: auto;
     }
-    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 20px; }
-    .metric { background: #222; border: 1px solid #333; border-left: 3px solid #0d7; padding: 10px; border-radius: 4px; font-size: 0.8em; }
-    .metric-label { color: #666; text-transform: uppercase; font-size: 0.75em; margin-bottom: 4px; }
-    .metric-value { color: #0d7; font-weight: bold; font-size: 1.1em; }
-    footer { max-width: 1200px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid #444; text-align: center; color: #666; font-size: 0.85em; }
-    @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+    .output-line {
+      margin: 4px 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .metric {
+      padding: 15px;
+      background: #1e1e1e;
+      border: 1px solid #444;
+      border-left: 4px solid #0d7;
+      border-radius: 4px;
+    }
+
+    .metric-label {
+      font-size: 0.85em;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.3em;
+      color: #0d7;
+      font-weight: bold;
+      word-break: break-all;
+    }
+
+    .metric-error {
+      color: #f44;
+      font-size: 0.9em;
+    }
+
+    .errors {
+      margin-top: 15px;
+      padding: 10px;
+      background: #3a1a1a;
+      border-left: 3px solid #f44;
+      color: #faa;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .examples {
+      margin-top: 15px;
+    }
+
+    .example-button {
+      display: block;
+      padding: 8px 12px;
+      background: #333;
+      border: 1px solid #444;
+      color: #0d7;
+      border-radius: 4px;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .example-button:hover {
+      background: #444;
+      border-color: #0d7;
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 40px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid #444;
+      text-align: center;
+      color: #666;
+      font-size: 0.85em;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>🧠 SoulVM JIT</h1>
     <p class="subtitle">EmojiScript Compiler + WASM Execution</p>
-    <div class="status" id="wasm-status">Loading WASM...</div>
+    <div class="status" id="wasm-status">
+      Loading WASM...
+    </div>
   </header>
 
   <div class="container">
+    <!-- Left Panel: Editor -->
     <div class="panel">
-      <h2>⌨️ EmojiScript Source</h2>
+      <h2>EmojiScript Source</h2>
       <textarea id="editor" spellcheck="false">🔢42 🔢8 ➕ 🔒 ↩️</textarea>
+
+      <div class="examples">
+        <strong style="color: #888; font-size: 0.9em;">Quick Examples:</strong>
+        <button class="example-button" onclick="loadExample('🔢42')">
+          → Push 42
+        </button>
+        <button class="example-button" onclick="loadExample('🔢5 🔢3 ➕ ↩️')">
+          → 5 + 3 = 8
+        </button>
+        <button class="example-button" onclick="loadExample('🔢10 🔢2 🔢3 ➕ ✖️ ↩️')">
+          → 10 * (2 + 3) = 50
+        </button>
+      </div>
+
       <div class="button-group">
-        <button onclick="compileAndRun()">▶ Compile & Execute</button>
-        <button onclick="clearEditor()">⊘ Clear</button>
+        <button onclick="compileAndRun()" id="compile-btn">▶ Compile & Execute</button>
+        <button onclick="clearEditor()" id="clear-btn">⊘ Clear</button>
       </div>
     </div>
 
+    <!-- Right Panel: Output -->
     <div class="panel">
-      <h2>📤 Execution Result</h2>
+      <h2>Execution Result</h2>
       <div id="output">Ready to compile...\nClick "▶ Compile & Execute" to begin.</div>
+
       <div class="metrics" id="metrics">
         <div class="metric">
           <div class="metric-label">Proof Status</div>
@@ -124,6 +303,8 @@
           <div class="metric-value" id="blake3-check">—</div>
         </div>
       </div>
+
+      <div id="errors" style="display: none;"></div>
     </div>
   </div>
 
@@ -131,13 +312,41 @@
     <p>SoulVM JIT v1.1.0 | Lean 4 Proofs + Rust WASM | <a href="https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge" style="color: #0d7; text-decoration: none;">GitHub</a></p>
   </footer>
 
-  <script>
+  <script type="module">
+    // ========================================================================
+    // WASM Module Loading
+    // ========================================================================
+
     let wasmReady = false;
+    let wasmModule = null;
+
+    async function initWasm() {
+      try {
+        // Import WASM module
+        const wasmImport = await import('./assets/skclisp_crypto_wasm.js');
+        wasmModule = wasmImport;
+
+        // Initialize
+        await wasmImport.default();
+
+        wasmReady = true;
+        updateStatus('✓ WASM Ready', false);
+        console.log('✓ WASM module initialized');
+
+      } catch (err) {
+        console.error('Failed to initialize WASM:', err);
+        updateStatus('✗ WASM Load Failed', true);
+      }
+    }
+
+    // ========================================================================
+    // UI Functions
+    // ========================================================================
 
     function updateStatus(text, isError = false) {
       const el = document.getElementById('wasm-status');
       el.textContent = text;
-      el.style.borderLeftColor = isError ? '#f44' : '#0d7';
+      el.className = 'status' + (isError ? ' error' : '');
     }
 
     function log(msg) {
@@ -146,13 +355,32 @@
       output.scrollTop = output.scrollHeight;
     }
 
+    function clearOutput() {
+      document.getElementById('output').innerHTML = '';
+    }
+
     function clearEditor() {
       document.getElementById('editor').value = '';
       document.getElementById('editor').focus();
     }
 
+    function loadExample(source) {
+      document.getElementById('editor').value = source;
+      document.getElementById('editor').focus();
+    }
+
+    // ========================================================================
+    // Compilation Pipeline
+    // ========================================================================
+
     async function compileAndRun() {
-      const btn = event.target;
+      if (!wasmReady) {
+        log('[ERROR] WASM module not ready');
+        return;
+      }
+
+      clearOutput();
+      const btn = document.getElementById('compile-btn');
       btn.disabled = true;
       btn.textContent = '⟳ Compiling...';
 
@@ -162,51 +390,87 @@
 
         log('[compile] Source: ' + source);
 
-        // Browser-compatible: use TextEncoder instead of Buffer.from
-        const encoder = new TextEncoder();
-        const sourceBuffer = encoder.encode(source);
-
-        // Convert to hex string (browser-compatible)
-        const sourceHex = Array.from(sourceBuffer)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-          .substring(0, 16);
+        // Step 1: Create dummy proof certificate (157 bytes)
+        const certBytes = new Uint8Array(157);
+        certBytes[0] = 0x01;    // theorem_id = 1
+        certBytes[36] = 0x0F;   // theorems_covered = 0x0F (T01-T04)
+        certBytes[40] = 0x07;   // machine_state_invariants = 0x07
+        for (let i = 0; i < 'x86_64'.length; i++) {
+          certBytes[44 + i] = 'x86_64'.charCodeAt(i);
+        }
+        certBytes[60] = 2;      // optimization_level = 2
 
         log('[proof] Validating proof certificate...');
-        log('[proof] Theorem ID: 0x0001');
-        log('[proof] Theorems covered: 0x000F');
-        log('[proof] Proof certificate valid');
 
+        // Step 2: Validate proof certificate
+        const certValidation = wasmModule.validate_proof_certificate_wasm(certBytes);
+        log('[proof] Theorem ID: 0x' + certValidation.theorem_id.toString(16).padStart(4, '0'));
+        log('[proof] Theorems covered: 0x' + certValidation.theorems_covered.toString(16).padStart(4, '0'));
+        log('[proof] ' + certValidation.message);
+
+        if (!certValidation.valid) {
+          throw new Error('Proof certificate invalid: ' + certValidation.message);
+        }
+
+        // Step 3: Blake3 hash source
         log('[blake3] Computing source hash...');
-        log('[blake3] Hash: ' + sourceHex + '...');
+        const sourceBuffer = Buffer.from(source);
+        const sourceHash = wasmModule.blake3_hash(sourceBuffer);
+        log('[blake3] Hash: ' + Buffer.from(sourceHash).toString('hex').substring(0, 16) + '...');
 
+        // Step 4: Mutation validation
         log('[mutation] Running 8-point validation gate...');
-        log('[mutation] All 8 gates passed');
+        const mutationCheck = wasmModule.validate_mutation_wasm(
+          1,              // event_id
+          0,              // generation
+          new Uint8Array(sourceHash),
+          new Uint8Array(32),  // bytecode_hash (dummy)
+          new Uint8Array(32),  // native_code_hash (dummy)
+          new Uint8Array(64)   // actor_signature (dummy)
+        );
+        log('[mutation] ' + mutationCheck.message);
 
+        if (!mutationCheck.valid) {
+          throw new Error('Mutation validation failed: ' + mutationCheck.message);
+        }
+
+        // Step 5: Final metrics
         const compileTime = (performance.now() - startTime).toFixed(2);
+
         log('[complete] Compilation successful');
         log('[metrics] Compile time: ' + compileTime + 'ms');
+        log('[metrics] Proof: T0' + certValidation.theorem_id + ' verified');
+        log('[metrics] Mutation: All 8 gates passed');
 
         // Update dashboard
-        document.getElementById('proof-status').textContent = '✓ T0001';
+        document.getElementById('proof-status').textContent = '✓ T0' + certValidation.theorem_id;
         document.getElementById('compile-time').textContent = compileTime + 'ms';
         document.getElementById('bytecode-size').textContent = sourceBuffer.length + 'B';
         document.getElementById('blake3-check').textContent = '✓ Valid';
 
-      } catch (e) {
-        log('[ERROR] ' + e.message);
-        updateStatus('✗ Error', true);
+      } catch (err) {
+        log('[ERROR] ' + err.message);
+        const errDiv = document.getElementById('errors');
+        errDiv.textContent = err.message;
+        errDiv.style.display = 'block';
+        updateStatus('✗ Compilation Error', true);
       } finally {
         btn.disabled = false;
         btn.textContent = '▶ Compile & Execute';
       }
     }
 
-    window.addEventListener('load', () => {
-      updateStatus('✓ Ready', false);
-      log('✓ SoulVM JIT initialized');
-      log('Type EmojiScript code and click "▶ Compile & Execute"');
-      document.getElementById('editor').focus();
+    // ========================================================================
+    // Initialization
+    // ========================================================================
+
+    window.compileAndRun = compileAndRun;
+    window.clearEditor = clearEditor;
+    window.loadExample = loadExample;
+
+    // Start on page load
+    window.addEventListener('load', async () => {
+      await initWasm();
     });
   </script>
 </body>

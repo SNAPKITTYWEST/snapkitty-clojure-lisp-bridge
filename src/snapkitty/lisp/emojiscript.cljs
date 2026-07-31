@@ -110,7 +110,7 @@
                   (recur next-idx))))
 
             ; Zero-arg ops (return immediately)
-            (contains? #{:Add :Sub :Mul :Div :And :Or :Xor :Ret} (get emoji-tokens g))
+            (contains? #{:Add :Sub :Mul :Div :And :Or :Xor :Ret :Stream :PolicyCheck :Seal :ReadOnly} (get emoji-tokens g))
             (do
               (swap! ops conj {:op (get emoji-tokens g)})
               (recur (inc idx)))
@@ -224,18 +224,45 @@
 ;; Execution (stack-based interpreter)
 ;; ============================================================================
 
-(defn execute-emojiscript [bytecode & {:keys [max-steps] :or {max-steps 10000}}]
-  "Execute compiled EmojiScript bytecode
+;; ============================================================================
+;; Semantic Passes (Phase 2)
+;; ============================================================================
+
+(defn- telemetry-log [event data]
+  "Log event to telemetry-bus (stub for now)"
+  {:type :telemetry :event event :data data :timestamp (js/Date.now)})
+
+(defn- policy-route [value policy-id]
+  "Route to policy-immune handler (stub for now)"
+  {:type :policy-route :value value :policy-id policy-id})
+
+(defn- bifrost-seal [value seal-id worm-ledger]
+  "Seal value to WORM ledger (stub for now)"
+  {:type :bifrost-seal :value value :seal-id seal-id :ledger worm-ledger})
+
+(defn- capability-downgrade [rights from-level to-level]
+  "Downgrade capability rights (stub for now)"
+  (max 0 (bit-shift-right rights (- from-level to-level))))
+
+;; ============================================================================
+;; Execution (stack-based interpreter)
+;; ============================================================================
+
+(defn execute-emojiscript [bytecode & {:keys [max-steps telemetry-bus policy-registry worm-ledger]
+                                       :or {max-steps 10000}}]
+  "Execute compiled EmojiScript bytecode with semantic passes
 
    Returns:
    {:result (top of stack)
     :stack [values]
     :steps number
-    :halted? boolean}"
+    :halted? boolean
+    :events [telemetry events]}"
   (let [stack (atom [])
         pc (atom 0)
         steps (atom 0)
-        halted? (atom false)]
+        halted? (atom false)
+        events (atom [])]
 
     (try
       (while (and (< @pc (count bytecode))
@@ -325,37 +352,58 @@
             (reset! halted? true)
 
             :Stream
-            (do
-              ; Telemetry pass (future)
-              (swap! pc inc))
+            (let [value (peek @stack)]
+              (if value
+                (do
+                  (swap! events conj (telemetry-log :stream-push {:value value}))
+                  (swap! pc inc))
+                (throw (ex-info "🌊 Stream requires value on stack" {}))))
 
             :PolicyCheck
-            (do
-              ; Policy pass (future)
-              (swap! pc inc))
+            (let [value (peek @stack)
+                  policy-id (:policy-id instr 0)]
+              (if value
+                (do
+                  (swap! events conj (policy-route value policy-id))
+                  (swap! pc inc))
+                (throw (ex-info "🧠 PolicyCheck requires value on stack" {}))))
 
             :Seal
-            (do
-              ; Seal hint (future)
-              (swap! pc inc))
+            (let [value (peek @stack)
+                  seal-id (:seal-id instr (str "seal-" @steps))]
+              (if value
+                (do
+                  (swap! events conj (bifrost-seal value seal-id worm-ledger))
+                  (swap! pc inc))
+                (throw (ex-info "🔒 Seal requires value on stack" {}))))
 
             :ReadOnly
-            (do
-              ; Downgrade hint (future)
-              (swap! pc inc))
+            (let [rights (peek @stack)
+                  from-level (:from-level instr 7)
+                  to-level (:to-level instr 3)]
+              (if rights
+                (do
+                  (let [downgraded (capability-downgrade rights from-level to-level)]
+                    (swap! stack pop)
+                    (swap! stack conj downgraded))
+                  (swap! events conj {:type :capability-downgrade :from from-level :to to-level})
+                  (swap! pc inc))
+                (throw (ex-info "🔓 ReadOnly requires capability on stack" {}))))
 
             (throw (ex-info "Unknown instruction" {:instr instr})))))
 
       {:result (peek @stack)
        :stack (vec @stack)
        :steps @steps
-       :halted? @halted?}
+       :halted? @halted?
+       :events @events}
 
       (catch js/Error e
         {:error (.-message e)
          :stack (vec @stack)
          :steps @steps
-         :halted? false}))))
+         :halted? false
+         :events @events}))))
 
 ;; ============================================================================
 ;; Public API

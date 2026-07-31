@@ -148,6 +148,45 @@
 ;; Integration Tests (MCP tools)
 ;; ============================================================================
 
+;; ============================================================================
+;; Semantic Passes (Phase 2)
+;; ============================================================================
+
+(deftest test-semantic-pass-stream
+  "🌊 Stream — telemetry-bus integration"
+  (let [compiled (emoji/compile-emojiscript "🔢42 🌊 ↩️")
+        result (emoji/execute-emojiscript (:bytecode compiled))]
+    (is (:halted? result))
+    (is (= 42 (:result result)))
+    (is (some #(= (:type %) :telemetry) (:events result)))
+    (is (>= (count (filter #(= (:event %) :stream-push) (:events result))) 1))))
+
+(deftest test-semantic-pass-policy-check
+  "🧠 PolicyCheck — policy-immune routing"
+  (let [compiled (emoji/compile-emojiscript "🔢100 🧠 ↩️")
+        result (emoji/execute-emojiscript (:bytecode compiled))]
+    (is (:halted? result))
+    (is (= 100 (:result result)))
+    (is (some #(= (:type %) :policy-route) (:events result)))))
+
+(deftest test-semantic-pass-seal
+  "🔒 Seal — Bifrost WORM signing"
+  (let [compiled (emoji/compile-emojiscript "🔢777 🔒 ↩️")
+        result (emoji/execute-emojiscript (:bytecode compiled) :worm-ledger {})
+        seal-event (first (filter #(= (:type %) :bifrost-seal) (:events result)))]
+    (is (:halted? result))
+    (is (= 777 (:result result)))
+    (is seal-event)
+    (is (= 777 (:value seal-event)))))
+
+(deftest test-semantic-pass-readonly
+  "🔓 ReadOnly — capability downgrade"
+  (let [compiled (emoji/compile-emojiscript "🔢255 🔓 ↩️")
+        result (emoji/execute-emojiscript (:bytecode compiled))]
+    (is (:halted? result))
+    (is (< (:result result) 255))
+    (is (some #(= (:type %) :capability-downgrade) (:events result)))))
+
 (deftest test-mcp-compile-tool
   "MCP compile_emojiscript tool"
   (let [source "🔢40 🔢2 ➕ ↩️"]
