@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="LISP Machine"/>
+  <meta name="theme-color" content="#000a00"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>SnapKitty LISP Machine</title>
+
+  <!-- xterm.js from CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      font-family: monospace;
+    }
+
+    /* ── CRT container ── */
+    #crt {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+      background: #000;
+
+      /* Phosphor screen curvature */
+      border-radius: 12px;
+      margin: 8px;
+      box-shadow:
+        0 0 0 2px #1a1a1a,
+        0 0 0 4px #111,
+        inset 0 0 60px rgba(0, 255, 60, 0.03);
+    }
+
+    /* Scanline overlay */
+    #crt::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Vignette */
+    #crt::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center,
+        transparent 60%,
+        rgba(0, 0, 0, 0.55) 100%
+      );
+      pointer-events: none;
+      z-index: 11;
+    }
+
+    #terminal {
+      position: absolute;
+      inset: 12px;
+      z-index: 1;
+    }
+
+    /* Status bar */
+    #statusbar {
+      height: 28px;
+      background: #050505;
+      border-top: 1px solid #0f2d0f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: #1a6b1a;
+      letter-spacing: 0.05em;
+    }
+
+    #statusbar .left { display: flex; gap: 24px; }
+    #statusbar .right { color: #0d3d0d; }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #33ff33;
+      box-shadow: 0 0 4px #33ff33;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* xterm override — phosphor green */
+    .xterm-screen canvas { image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+
+<div id="crt">
+  <div id="terminal"></div>
+</div>
+
+<div id="statusbar">
+  <div class="left">
+    <span><span class="status-dot"></span>LISP MACHINE ONLINE</span>
+    <span id="stat-tick">TICK: 0</span>
+    <span id="stat-bindings">BINDINGS: 16</span>
+    <span id="stat-chain">CHAIN: 0</span>
+  </div>
+  <div class="right" id="stat-seal">UNSEALED</div>
+</div>
+
+<script>
+const { invoke } = window.__TAURI__.core;
+
+// ── Terminal init ─────────────────────────────────────────────────────────────
+const term = new Terminal({
+  cols: 80,
+  rows: 30,
+  theme: {
+    background:    '#000000',
+    foreground:    '#33ff33',
+    cursor:        '#33ff33',
+    cursorAccent:  '#000000',
+    selectionBackground: 'rgba(51,255,51,0.3)',
+    black:         '#000000',
+    green:         '#33ff33',
+    brightGreen:   '#66ff66',
+    red:           '#ff3333',
+    yellow:        '#ffff33',
+    cyan:          '#33ffff',
+    white:         '#ccffcc',
+    brightWhite:   '#ffffff',
+  },
+  fontFamily: '"Courier New", "Lucida Console", monospace',
+  fontSize: 14,
+  lineHeight: 1.3,
+  letterSpacing: 0.5,
+  cursorBlink: true,
+  cursorStyle: 'block',
+  scrollback: 1000,
+  allowTransparency: true,
+});
+
+const fitAddon = new FitAddon.FitAddon();
+term.loadAddon(fitAddon);
+term.open(document.getElementById('terminal'));
+fitAddon.fit();
+window.addEventListener('resize', () => fitAddon.fit());
+
+// ── Boot sequence ─────────────────────────────────────────────────────────────
+const G = '\x1b[32m';   // green
+const B = '\x1b[92m';   // bright green
+const D = '\x1b[2;32m'; // dim green
+const R = '\x1b[0m';    // reset
+const Y = '\x1b[33m';   // yellow (amber accent)
+const C = '\x1b[36m';   // cyan
+
+async function boot() {
+  const lines = [
+    '',
+    `${B}  ███████╗███╗   ██╗ █████╗ ██████╗ ██╗  ██╗██╗████████╗████████╗██╗   ██╗${R}`,
+    `${G}  ██╔════╝████╗  ██║██╔══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝╚══██╔══╝╚██╗ ██╔╝${R}`,
+    `${G}  ███████╗██╔██╗ ██║███████║██████╔╝█████╔╝ ██║   ██║      ██║    ╚████╔╝ ${R}`,
+    `${D}  ╚════██║██║╚██╗██║██╔══██║██╔═══╝ ██╔═██╗ ██║   ██║      ██║     ╚██╔╝  ${R}`,
+    `${D}  ███████║██║ ╚████║██║  ██║██║     ██║  ██╗██║   ██║      ██║      ██║   ${R}`,
+    `${D}  ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝      ╚═╝      ╚═╝   ${R}`,
+    '',
+    `${Y}  VIRTUAL LISP MACHINE v0.1 — SOVEREIGN TICK RUNTIME${R}`,
+    `${D}  Tagged heap · Mark-sweep GC · WORM-sealed world dumps${R}`,
+    '',
+    `${G}  METATRON has seeded the world state.${R}`,
+    `${D}  World map distributed. σ₀ sealed.${R}`,
+    '',
+    `${C}  Commands:${R}`,
+    `${G}  (define x 42)    ${D}— bind a symbol${R}`,
+    `${G}  (lambda (x) ...) ${D}— create a closure${R}`,
+    `${G}  seal!             ${D}— checkpoint world state to WORM chain${R}`,
+    `${G}  stats             ${D}— show machine stats${R}`,
+    `${G}  help              ${D}— show all builtins${R}`,
+    '',
+  ];
+  for (const line of lines) {
+    term.writeln(line);
+    await sleep(18);
+  }
+  prompt();
+}
+
+// ── REPL ──────────────────────────────────────────────────────────────────────
+let inputBuf = '';
+let history   = [];
+let histIdx   = -1;
+
+function prompt() {
+  term.write(`${G}λ>${R} `);
+}
+
+term.onKey(async ({ key, domEvent }) => {
+  const code = domEvent.keyCode;
+
+  if (code === 13) {                    // Enter
+    term.writeln('');
+    const line = inputBuf.trim();
+    inputBuf = '';
+    histIdx  = -1;
+    if (line) {
+      history.unshift(line);
+      await handleLine(line);
+    }
+    prompt();
+
+  } else if (code === 8) {             // Backspace
+    if (inputBuf.length > 0) {
+      inputBuf = inputBuf.slice(0, -1);
+      term.write('\b \b');
+    }
+
+  } else if (code === 38) {            // Up arrow — history
+    if (histIdx < history.length - 1) {
+      histIdx++;
+      const entry = history[histIdx];
+      clearInput();
+      inputBuf = entry;
+      term.write(entry);
+    }
+
+  } else if (code === 40) {            // Down arrow — history
+    if (histIdx > 0) {
+      histIdx--;
+      const entry = history[histIdx];
+      clearInput();
+      inputBuf = entry;
+      term.write(entry);
+    } else if (histIdx === 0) {
+      histIdx = -1;
+      clearInput();
+    }
+
+  } else if (code === 67 && domEvent.ctrlKey) {   // Ctrl+C
+    term.writeln('');
+    inputBuf = '';
+    prompt();
+
+  } else if (key.length === 1) {
+    inputBuf += key;
+    term.write(key);
+  }
+});
+
+function clearInput() {
+  term.write('\r' + ' '.repeat(inputBuf.length + 3) + '\r');
+  term.write(`${G}λ>${R} `);
+  inputBuf = '';
+}
+
+async function handleLine(line) {
+  if (line === 'seal!') {
+    const result = await invoke('lisp_checkpoint').catch(e => `error: ${e}`);
+    term.writeln(`${Y}  ${result}${R}`);
+    await refreshStats();
+
+  } else if (line === 'stats') {
+    const result = await invoke('lisp_stats').catch(e => `error: ${e}`);
+    term.writeln(`${C}  ${result}${R}`);
+
+  } else if (line === 'help') {
+    const builtins = [
+      '  Arithmetic:  + - * /',
+      '  Compare:     = < > eq?',
+      '  Lists:       cons car cdr list null?',
+      '  Logic:       not and or',
+      '  Control:     if cond begin let',
+      '  Define:      define lambda',
+      '  Special:     quote',
+      '  Meta:        print',
+      '  Machine:     seal!  stats  help',
+    ];
+    for (const line of builtins) term.writeln(`${D}${line}${R}`);
+
+  } else if (line === 'clear') {
+    term.clear();
+
+  } else {
+    try {
+      const result = await invoke('lisp_eval', { expr: line });
+      term.writeln(`${B}  => ${result}${R}`);
+    } catch (e) {
+      term.writeln(`${'\x1b[31m'}  ! ${e}${R}`);
+    }
+  }
+}
+
+async function refreshStats() {
+  try {
+    const stats = await invoke('lisp_stats');
+    const m = stats.match(/tick=(\d+).*bindings=(\d+).*chain_len=(\d+)/);
+    if (m) {
+      document.getElementById('stat-tick').textContent     = `TICK: ${m[1]}`;
+      document.getElementById('stat-bindings').textContent = `BINDINGS: ${m[2]}`;
+      document.getElementById('stat-chain').textContent    = `CHAIN: ${m[3]}`;
+    }
+    const seal = stats.match(/hash=([a-f0-9]+)/);
+    if (seal) {
+      document.getElementById('stat-seal').textContent = `SEALED: ${seal[1].slice(0,12)}...`;
+    }
+  } catch {}
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+boot();
+setInterval(refreshStats, 5000);
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

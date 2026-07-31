@@ -1,0 +1,18 @@
+{
+  "name": "SnapKitty LISP Machine",
+  "short_name": "LISP",
+  "description": "Sovereign LISP REPL — xterm.js phosphor terminal, seal! and stats commands",
+  "start_url": "/lisp-machine/",
+  "scope": "/lisp-machine/",
+  "display": "standalone",
+  "background_color": "#000a00",
+  "theme_color": "#000a00",
+  "icons": [
+    {
+      "src": "https://sovereign-mesh.snapkittywest.workers.dev/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
