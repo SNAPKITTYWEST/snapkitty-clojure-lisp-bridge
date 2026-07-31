@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-07-31T16:43:01.863Z",
+  "algorithm": "miniKanren+Z3+Lean4",
+  "synthesis": {
+    "totalCandidates": 2,
+    "successful": "candidate_2",
+    "failures": [
+      "candidate_1"
+    ],
+    "failureDetails": [
+      {
+        "candidateId": "candidate_1",
+        "reason": "Z3 validation failed",
+        "unsat_core": [
+          "Base case structure mismatch",
+          "Expected: eq(_y, _z)",
+          "Found: cons(...)"
+        ],
+        "timestamp": "2026-07-31T16:43:01.861Z"
+      }
+    ]
+  },
+  "hashes": {
+    "ast": "a4b7e616bf28ed0f1317285c4103978086f7725cdc13f2924f785b10dd0c9f46",
+    "code": "3ff4645ecd1e3d3def87c809ff17056448bd6bb2d284839747b97c14124bea41",
+    "lean4_cert": "d3311e3149414015c4b0aae8efc0813351019f46420a188c65050e3494156976",
+    "receipt_content": "8f0f432c54f14f68f5b919f41af3cb2f954eb5701f25a3b887d3b5e68a7b2abb"
+  },
+  "z3_validation": {
+    "sat_status": "SAT",
+    "model": "Z = [1,2,3]",
+    "test_case": "append([1,2], [3], Z) => Z=[1,2,3]",
+    "semantic_validation": "PASSED"
+  },
+  "execution": {
+    "duration_ms": 10,
+    "candidates_evaluated": 2,
+    "validation_backend": "miniKanren + Z3 semantics",
+    "node_version": "v25.9.0"
+  },
+  "cryptographic_proof": {
+    "public_key": "2dff00ad43df469c42011945eb27bb7d659da6b0f2848cb3f9d127766093b44c",
+    "signature": "bed5b3ced328dcf58d1c5c7d665377955c11320b9bb1960304cf8f16c723a606d1c56c1187578ec59c1e7d5e03fffa45680fce1b2881f2ab5a65c2debd437102",
+    "algorithm": "Ed25519",
+    "message": "8f0f432c54f14f68f5b919f41af3cb2f954eb5701f25a3b887d3b5e68a7b2abb"
+  }
+}

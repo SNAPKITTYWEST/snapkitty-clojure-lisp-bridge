@@ -1,0 +1,15 @@
+{
+  "name": "relational-lisp-synthesis",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "End-to-end relational Lisp synthesis with miniKanren + Z3 + Lean4",
+  "main": "refine-eval-append.mjs",
+  "scripts": {
+    "synth": "node refine-eval-append.mjs --verbose"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "tweetnacl": "^1.0.3",
+    "z3-solver": "^4.12.2"
+  }
+}
