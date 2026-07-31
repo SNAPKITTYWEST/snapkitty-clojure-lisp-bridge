@@ -1,30 +1,29 @@
-# Sovereign Lisp Machine: Production Runtime
+# SOVEREIGN KNOWLEDGE ENGINE
 
-> **Real-time knowledge engine with semantic embeddings, formal proofs, and in-browser execution. McCarthy-1958 LISP + EmojiScript bytecode + LTMS truth maintenance + ONNX semantic search — fully working on GitHub Pages, no server required.**
+<p align="center">
+  <strong>
+    A black-box portal into McCarthy LISP, semantic knowledge,
+    formal proof, and sovereign execution.
+  </strong>
+</p>
 
 <p align="center">
   <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html">
     <img
       src="./assets/sovereign-runtime-demo.gif"
-      alt="LTMS belief propagation with semantic search — assertions, derivations, cascade retraction"
+      alt="Enter the Sovereign McCarthy LISP Machine"
       width="100%"
-      style="border-radius: 8px; border: 1px solid #56e8ff; box-shadow: 0 0 20px rgba(86, 232, 255, 0.2);"
+      style="border-radius: 0; border: 2px solid #000; box-shadow: 0 0 40px rgba(0, 255, 0, 0.2);"
     />
   </a>
 </p>
 
 <p align="center">
-  <strong>Browser-native knowledge execution. No cloud runtime. No API dependency.</strong>
+  <strong>⬡ CLICK THE BLACK BOX TO ENTER McCARTHY'S LISP WORLD ⬡</strong>
 </p>
 
 <p align="center">
-  <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html">
-    <strong>Launch Live Runtime</strong>
-  </a>
-  ·
-  <a href="./docs/demo.mp4">
-    <strong>Full Demo (20s)</strong>
-  </a>
+  LISP 1958&nbsp;&nbsp;→&nbsp;&nbsp;Semantic Knowledge&nbsp;&nbsp;→&nbsp;&nbsp;EmojiScript Bytecode&nbsp;&nbsp;→&nbsp;&nbsp;Formal Proof
 </p>
 
 ---
