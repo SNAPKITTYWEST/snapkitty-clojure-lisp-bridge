@@ -1,0 +1,17 @@
+[package]
+name        = "bifrost-policy"
+version     = "0.1.0"
+edition     = "2021"
+description = "Lean 4 formal policy for bifrost events, extracted to Rust decision procedures"
+
+# The Lean 4 proof library lives in lean/ and is built by Lake (not cargo).
+# `cargo build` compiles only the Rust stub in src/; run `lake build` inside
+# bifrost-policy/ to type-check the Lean 4 theorems.
+
+[dependencies]
+bifrost    = { path = "../bifrost" }
+serde      = { workspace = true }
+thiserror  = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

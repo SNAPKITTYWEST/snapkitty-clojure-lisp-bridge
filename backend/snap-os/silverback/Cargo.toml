@@ -1,0 +1,18 @@
+[package]
+name    = "silverback"
+version = "0.1.0"
+edition = "2021"
+description = "snap-os microkernel: capability system + memory allocator"
+
+[dependencies]
+# deliberately empty — kernel has no runtime deps
+
+[dev-dependencies]
+# tests use std automatically even with #![no_std] in lib
+
+[profile.kernel]
+inherits      = "release"
+opt-level     = "z"
+lto           = true
+codegen-units = 1
+panic         = "abort"

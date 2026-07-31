@@ -1,0 +1,9 @@
+[package]
+name = "soul-bus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+soul-agent = { path = "../soul-agent" }
+craft-crypto = { path = "../craft-crypto" }
+soulvm = { path = "../soulvm" }

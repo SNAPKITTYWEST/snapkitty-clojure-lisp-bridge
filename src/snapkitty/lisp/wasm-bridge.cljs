@@ -3,7 +3,7 @@
 
 (ns snapkitty.lisp.wasm-bridge
   (:require-macros [cljs.core :refer [js-inline]])
-  (:require ["../../../native/pkg/skclisp_crypto_wasm.js" :as wasm-module]))
+  (:require ["/assets/skclisp_crypto_wasm.js" :as wasm-module]))
 
 ;; ============================================================================
 ;; WASM Module Lifecycle
