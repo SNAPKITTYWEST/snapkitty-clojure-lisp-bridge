@@ -743,7 +743,23 @@ button {
   </div>
 
   <script type="module">
-    import SovereignRuntime from './js/sovereign-runtime.mjs';
+    // Load the real ClojureScript compiled runtime (when available)
+    // Fallback to compatibility runtime while build is pending
+    let SovereignRuntime;
+
+    try {
+      // Attempt to load real compiled ClojureScript bundle
+      SovereignRuntime = window.snapkitty?.lisp?.integration?.world;
+      if (!SovereignRuntime) {
+        console.warn('[Sovereign] Real ClojureScript runtime not yet compiled. Using compatibility bridge.');
+        const { default: compatRuntime } = await import('./js/sovereign-runtime.mjs');
+        SovereignRuntime = compatRuntime;
+      }
+    } catch (err) {
+      console.error('[Sovereign] Failed to load runtime:', err);
+      const { default: compatRuntime } = await import('./js/sovereign-runtime.mjs');
+      SovereignRuntime = compatRuntime;
+    }
 
     // ========================================================================
     // Global State

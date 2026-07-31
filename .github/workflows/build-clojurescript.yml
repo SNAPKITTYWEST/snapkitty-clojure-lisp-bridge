@@ -1,0 +1,96 @@
+name: Build ClojureScript Runtime
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**/*.cljs'
+      - 'shadow-cljs.edn'
+      - 'deps.edn'
+      - '.github/workflows/build-clojurescript.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Clojure CLI
+        uses: DeLaGuardo/setup-clojure@12.1
+        with:
+          cli: '1.11.1.1435'
+          bb: 'latest'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/deps.edn') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Compile ClojureScript browser bundle
+        run: |
+          echo "[ClojureScript Build] Starting compilation..."
+          npx shadow-cljs release browser 2>&1 | tee cljs-build.log
+          BUILD_EXIT=$?
+          echo "Build exit code: $BUILD_EXIT"
+
+          if [ $BUILD_EXIT -eq 0 ]; then
+            echo "[ClojureScript Build] ✓ Success"
+            ls -lh docs/js/
+          else
+            echo "[ClojureScript Build] ✗ Failed"
+            cat cljs-build.log
+            exit $BUILD_EXIT
+          fi
+
+      - name: Generate build report
+        if: always()
+        run: |
+          cat > docs/BUILD_REPORT.md <<'EOF'
+          # ClojureScript Build Report
+
+          **Build Date**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          **Git Commit**: $(git rev-parse --short HEAD)
+          **Java Version**: $(java -version 2>&1 | head -1)
+          **Clojure CLI**: $(clojure --version)
+          **Node.js**: $(node --version)
+          **shadow-cljs**: $(npx shadow-cljs --version)
+
+          ## Build Output
+
+          EOF
+          cat cljs-build.log >> docs/BUILD_REPORT.md
+
+      - name: Commit build artifacts
+        if: success()
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add docs/js/main.js* docs/BUILD_REPORT.md
+          git commit -m "build: ClojureScript browser bundle compiled" || echo "No changes to commit"
+          git push origin master
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ ClojureScript compilation failed. See cljs-build.log above."
+          exit 1
