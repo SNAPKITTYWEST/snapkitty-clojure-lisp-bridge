@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clojure → EmojiScript Bytecode Compiler</title>
+  <style>
+:root {
+  --bg-void: #020508;
+  --bg-deep: #050b12;
+  --cyan: #56e8ff;
+  --cyan-hot: #a9f7ff;
+  --teal: #38ffc7;
+  --green: #5dff9d;
+  --violet: #ab7cff;
+  --gold: #ffc857;
+  --red: #ff5470;
+  --text-primary: #e8fbff;
+  --text-secondary: #8eb5c1;
+  --text-muted: #52707a;
+  --radius: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg-void); }
+body {
+  min-height: 100vh;
+  font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  background: linear-gradient(180deg, var(--bg-void) 0%, var(--bg-deep) 100%);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.compiler-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--cyan-hot);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 0 30px rgba(86, 232, 255, 0.3);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.compiler-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.panel {
+  border: 1px solid rgba(86, 232, 255, 0.3);
+  background: linear-gradient(160deg, rgba(10, 26, 38, 0.9), rgba(3, 11, 17, 0.96));
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.26), inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.panel-title {
+  margin: 0 0 16px;
+  color: var(--cyan-hot);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(86, 232, 255, 0.2);
+  padding-bottom: 12px;
+}
+
+textarea {
+  width: 100%;
+  height: 300px;
+  background: #03080d;
+  border: 1px solid rgba(86, 232, 255, 0.1);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 12px;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(86, 232, 255, 0.2);
+}
+
+.output-box {
+  background: #03080d;
+  border: 1px solid rgba(86, 232, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 0.8rem;
+  max-height: 300px;
+  overflow-y: auto;
+  min-height: 300px;
+}
+
+.output-line {
+  margin: 4px 0;
+  padding: 4px 0;
+}
+
+.output-line.success { color: var(--green); }
+.output-line.error { color: var(--red); }
+.output-line.info { color: var(--cyan); }
+.output-line.symbol { color: var(--violet); }
+.output-line.code { color: var(--teal); font-weight: bold; }
+
+.controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: 1px solid rgba(86, 232, 255, 0.3);
+  background: linear-gradient(135deg, var(--cyan-hot), var(--cyan));
+  color: #001115;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 200ms var(--ease);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(86, 232, 255, 0.4);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn.secondary {
+  background: linear-gradient(135deg, rgba(171, 124, 255, 0.9), rgba(171, 124, 255, 0.7));
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.stat-box {
+  background: rgba(86, 232, 255, 0.05);
+  border: 1px solid rgba(86, 232, 255, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  color: var(--cyan-hot);
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.examples {
+  background: rgba(86, 232, 255, 0.05);
+  border: 1px solid rgba(86, 232, 255, 0.2);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.examples-title {
+  color: var(--cyan-hot);
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.example {
+  margin: 8px 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid var(--teal);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 150ms var(--ease);
+  font-size: 0.75rem;
+}
+
+.example:hover {
+  background: rgba(56, 255, 199, 0.1);
+  transform: translateX(4px);
+}
+
+@media (max-width: 768px) {
+  .compiler-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+}
+  </style>
+</head>
+<body>
+  <div class="compiler-shell">
+    <div class="header">
+      <h1 class="title">🧵 Clojure → EmojiScript Bytecode</h1>
+      <p class="subtitle">Real-time Clojure compiler targeting 15-opcode SoulVM</p>
+    </div>
+
+    <div class="compiler-grid">
+      <!-- INPUT: Clojure source -->
+      <div class="panel">
+        <h2 class="panel-title">📝 Clojure Source</h2>
+        <textarea id="clojure-input" placeholder="(+ 1 2)
+(* 3 4)
+(if (> 5 3) :yes :no)
+(let [x 10] (* x 2))"></textarea>
+        <div class="controls">
+          <button class="btn" onclick="compileClojure()">⚡ Compile</button>
+          <button class="btn secondary" onclick="clearInput()">↻ Clear</button>
+        </div>
+      </div>
+
+      <!-- OUTPUT: EmojiScript bytecode -->
+      <div class="panel">
+        <h2 class="panel-title">🔢 EmojiScript Bytecode</h2>
+        <div class="output-box" id="bytecode-output">
+          <div class="output-line info">• Ready for compilation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPILATION RESULTS -->
+    <div class="panel full-width">
+      <h2 class="panel-title">📊 Compilation Results</h2>
+      <div class="output-box" id="results-output">
+        <div class="output-line info">• Waiting for input...</div>
+      </div>
+      <div class="stats-grid" id="stats-grid" style="display: none; margin-top: 20px;">
+        <div class="stat-box">
+          <div class="stat-number" id="stat-bytecode">0</div>
+          <div class="stat-label">Bytecode Ops</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-constants">0</div>
+          <div class="stat-label">Constants</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-symbols">0</div>
+          <div class="stat-label">Symbols</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" id="stat-size">0B</div>
+          <div class="stat-label">Bytecode Size</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK EXAMPLES -->
+    <div class="examples">
+      <div class="examples-title">⚡ Quick Examples</div>
+      <div class="example" onclick="loadExample('(+ 1 2 3)')">Arithmetic: (+ 1 2 3)</div>
+      <div class="example" onclick="loadExample('(* 5 (- 10 3))')">Nested: (* 5 (- 10 3))</div>
+      <div class="example" onclick="loadExample('(if (> 5 3) :yes :no)')">Conditional: if</div>
+      <div class="example" onclick="loadExample('(and true false)')">Logic: (and true false)</div>
+      <div class="example" onclick="loadExample('[1 2 3 4 5]')">Vector: [1 2 3]</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import ClojureCompiler from './js/clojure-to-emojiscript.mjs';
+    window.ClojureCompiler = ClojureCompiler;
+
+    window.compileClojure = function() {
+      const source = document.getElementById('clojure-input').value;
+      if (!source.trim()) {
+        addOutput('error', '✗ Empty input');
+        return;
+      }
+
+      const result = ClojureCompiler.compile(source);
+      const bytecodeBox = document.getElementById('bytecode-output');
+      const resultsBox = document.getElementById('results-output');
+
+      bytecodeBox.innerHTML = '';
+      resultsBox.innerHTML = '';
+
+      if (!result.success) {
+        const line = document.createElement('div');
+        line.className = 'output-line error';
+        line.textContent = `✗ ${result.error}`;
+        resultsBox.appendChild(line);
+        return;
+      }
+
+      // Bytecode display
+      const bytecodeCode = document.createElement('div');
+      bytecodeCode.className = 'output-line code';
+      bytecodeCode.textContent = result.emojiscript;
+      bytecodeBox.appendChild(bytecodeCode);
+
+      // Results
+      const successLine = document.createElement('div');
+      successLine.className = 'output-line success';
+      successLine.textContent = '✓ Compilation successful';
+      resultsBox.appendChild(successLine);
+
+      // Stats
+      const bytecodeSize = (result.emojiscript.length * 4).toLocaleString();
+      document.getElementById('stat-bytecode').textContent = result.bytecode.length;
+      document.getElementById('stat-constants').textContent = result.constants.length;
+      document.getElementById('stat-symbols').textContent = Object.keys(result.symbolTable).length;
+      document.getElementById('stat-size').textContent = bytecodeSize + 'B';
+      document.getElementById('stats-grid').style.display = 'grid';
+
+      // Show constants
+      if (result.constants.length > 0) {
+        const constLine = document.createElement('div');
+        constLine.className = 'output-line info';
+        constLine.textContent = `Constants: ${JSON.stringify(result.constants)}`;
+        resultsBox.appendChild(constLine);
+      }
+
+      // Show symbol table
+      if (Object.keys(result.symbolTable).length > 0) {
+        const symLine = document.createElement('div');
+        symLine.className = 'output-line symbol';
+        symLine.textContent = `Symbols: ${JSON.stringify(result.symbolTable)}`;
+        resultsBox.appendChild(symLine);
+      }
+    };
+
+    window.clearInput = function() {
+      document.getElementById('clojure-input').value = '';
+      document.getElementById('bytecode-output').innerHTML = '<div class="output-line info">• Ready for compilation</div>';
+      document.getElementById('results-output').innerHTML = '<div class="output-line info">• Waiting for input...</div>';
+      document.getElementById('stats-grid').style.display = 'none';
+    };
+
+    window.loadExample = function(code) {
+      document.getElementById('clojure-input').value = code;
+      window.compileClojure();
+    };
+
+    function addOutput(type, text) {
+      const box = document.getElementById('results-output');
+      const line = document.createElement('div');
+      line.className = `output-line ${type}`;
+      line.textContent = text;
+      box.appendChild(line);
+    }
+  </script>
+</body>
+</html>

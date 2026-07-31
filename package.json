@@ -21,7 +21,9 @@
     "watch:browser": "npx shadow-cljs watch browser",
     "watch:dashboard": "npm run css:dashboard && npx shadow-cljs watch dashboard",
     "watch:all": "npx shadow-cljs watch server dashboard browser",
-    "test": "npx shadow-cljs compile test && node out/tests.js"
+    "test": "npx shadow-cljs compile test && node out/tests.js",
+    "compile:clojure": "node ./bin/clojure-to-bytecode.mjs",
+    "compile:verbose": "node ./bin/clojure-to-bytecode.mjs --verbose"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",
