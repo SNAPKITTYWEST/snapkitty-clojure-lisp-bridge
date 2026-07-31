@@ -2,31 +2,35 @@
 
 > **Real-time knowledge engine with semantic embeddings, formal proofs, and in-browser execution. McCarthy-1958 LISP + EmojiScript bytecode + LTMS truth maintenance + ONNX semantic search — fully working on GitHub Pages, no server required.**
 
-**🚀 LIVE:** https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html  
-**📊 Status:** ✅ PRODUCTION v1.1.0 — All systems operational  
-**🎯 Version:** Live runtime + 3 integrated consoles + semantic search + formal proofs
+<p align="center">
+  <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html">
+    <img
+      src="./assets/sovereign-runtime-demo.gif"
+      alt="LTMS belief propagation with semantic search — assertions, derivations, cascade retraction"
+      width="100%"
+      style="border-radius: 8px; border: 1px solid #56e8ff; box-shadow: 0 0 20px rgba(86, 232, 255, 0.2);"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Browser-native knowledge execution. No cloud runtime. No API dependency.</strong>
+</p>
+
+<p align="center">
+  <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html">
+    <strong>Launch Live Runtime</strong>
+  </a>
+  ·
+  <a href="./docs/demo.mp4">
+    <strong>Full Demo (20s)</strong>
+  </a>
+</p>
 
 ---
 
-## TRY IT NOW
-
-### Video Demo (20 seconds)
-
-<video width="100%" height="auto" controls style="border: 1px solid #56e8ff; border-radius: 8px; max-width: 800px; margin: 20px 0;">
-  <source src="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag. <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html">Click here to view interactive demo</a>
-</video>
-
-**What you're seeing:**
-- Real-time LTMS belief propagation system
-- Semantic search with ONNX embeddings (in-browser)
-- Cascade retraction when assumptions are removed
-- Knowledge graph updating in real-time
-- Full execution on GitHub Pages (no server required)
-
-### Interactive Demo (Try It Live)
-
-**[🎬 Click Here for Interactive Console](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html)** — Fully interactive version where you control the demo
+**Status:** ✅ PRODUCTION v1.1.0 — All systems operational  
+**Architecture:** Live runtime + 3 integrated consoles + semantic search + formal proofs
 
 ### Interactive Consoles (Pick One)
 | Console | What It Does | Link |
