@@ -10,18 +10,23 @@
 
 ## TRY IT NOW
 
-### Live Demo (Watch It Run)
+### Video Demo (20 seconds)
 
-<div style="border: 1px solid #56e8ff; border-radius: 8px; overflow: hidden; margin: 20px 0; box-shadow: 0 0 20px rgba(86, 232, 255, 0.2);">
-  <iframe src="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html" width="100%" height="800" style="border: none; display: block;" title="Sovereign Lisp Machine - Live Demo"></iframe>
-</div>
+<video width="100%" height="auto" controls style="border: 1px solid #56e8ff; border-radius: 8px; max-width: 800px; margin: 20px 0;">
+  <source src="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.mp4" type="video/mp4">
+  Your browser does not support the video tag. <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html">Click here to view interactive demo</a>
+</video>
 
 **What you're seeing:**
-- Real-time LTMS belief propagation
-- Semantic search finding related concepts  
-- Cascade retraction (dependencies collapse)
-- ONNX inference running in browser
-- Click **"Run Full Demo"** to execute the narrative
+- Real-time LTMS belief propagation system
+- Semantic search with ONNX embeddings (in-browser)
+- Cascade retraction when assumptions are removed
+- Knowledge graph updating in real-time
+- Full execution on GitHub Pages (no server required)
+
+### Interactive Demo (Try It Live)
+
+**[🎬 Click Here for Interactive Console](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html)** — Fully interactive version where you control the demo
 
 ### Interactive Consoles (Pick One)
 | Console | What It Does | Link |
