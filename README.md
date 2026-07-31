@@ -358,18 +358,18 @@ snapkitty-clojure-lisp-bridge/
 
 ## GITHUB PAGES DEPLOYMENT
 
-**Live at:** https://collectivekitty.com
+**Live at:** https://SNAPKITTYWEST.github.io/snapkitty-clojure-lisp-bridge/
 
 ### Interactive Frontends (GitHub Pages)
 
 1. **Landing Page** — Project overview
-   - https://collectivekitty.com/
+   - https://SNAPKITTYWEST.github.io/snapkitty-clojure-lisp-bridge/
    - Complete component inventory
    - Quick start guide
    - Architecture pipeline
 
 2. **Lisp Machine REPL** — Full CLI in browser
-   - https://collectivekitty.com/lisp-machine.html
+   - https://SNAPKITTYWEST.github.io/snapkitty-clojure-lisp-bridge/lisp-machine.html
    - Execute LISP code + EmojiScript
    - Query knowledge base
    - Real WASM crypto (Blake3 + Ed25519)
@@ -377,7 +377,7 @@ snapkitty-clojure-lisp-bridge/
    - No server required
 
 3. **SoulVM JIT Demo** — Interactive showcase
-   - https://collectivekitty.com/soulvm-jit-demo.html
+   - https://SNAPKITTYWEST.github.io/snapkitty-clojure-lisp-bridge/soulvm-jit-demo.html
    - Compile EmojiScript to native bytecode
    - Real proof certificate validation
    - Blake3 hashing (WASM)
