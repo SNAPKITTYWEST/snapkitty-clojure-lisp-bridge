@@ -10,12 +10,18 @@
 
 ## TRY IT NOW
 
-### Quick Demo (2 min)
-**[🎬 Live Demo: Click Here](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html)**
+### Live Demo (Watch It Run)
+
+<div style="border: 1px solid #56e8ff; border-radius: 8px; overflow: hidden; margin: 20px 0; box-shadow: 0 0 20px rgba(86, 232, 255, 0.2);">
+  <iframe src="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/demo.html" width="100%" height="800" style="border: none; display: block;" title="Sovereign Lisp Machine - Live Demo"></iframe>
+</div>
+
+**What you're seeing:**
 - Real-time LTMS belief propagation
 - Semantic search finding related concepts  
 - Cascade retraction (dependencies collapse)
 - ONNX inference running in browser
+- Click **"Run Full Demo"** to execute the narrative
 
 ### Interactive Consoles (Pick One)
 | Console | What It Does | Link |
