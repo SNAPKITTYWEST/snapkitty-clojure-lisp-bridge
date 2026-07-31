@@ -1,0 +1,362 @@
+#!/usr/bin/env node
+import { readdirSync, statSync, mkdirSync, readFileSync } from 'node:fs'
+import { createServer } from 'node:net'
+import { createHash } from 'node:crypto'
+import { join, relative, dirname, basename, extname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+
+import { verifyOnce } from './icp-verifier.mjs'
+import { run as runMetrics } from './metric-stream.mjs'
+import { run as runBifrost } from './bifrost-translator.mjs'
+import { run as runWatermark } from './watermark.mjs'
+import { sealEvent } from './worm-chain.mjs'
+
+const __dir = dirname(fileURLToPath(import.meta.url))
+const ROOT = join(__dir, '..')
+const PAGES = join(ROOT, 'pages')
+const OUT = join(ROOT, 'bifrost-out')
+const PUBLIC = join(ROOT, 'public')
+const GOVERNANCE = join(ROOT, 'governance', 'shadow-orchestrator.pl')
+const DAY_MS = 24 * 60 * 60 * 1000
+const require = createRequire(import.meta.url)
+const pl = require('tau-prolog')
+
+let tick = 0
+let running = false
+const relaySockets = new Set()
+
+function parseArgs() {
+  const args = process.argv.slice(2)
+  const intervalIdx = args.indexOf('--interval')
+  return {
+    once: args.includes('--once'),
+    interval: intervalIdx >= 0 ? parseInt(args[intervalIdx + 1], 10) : parseInt(process.env.ORCHESTRATE_INTERVAL_MS || '30000', 10),
+  }
+}
+
+function walk(dir, match, files = []) {
+  const stack = [dir]
+  while (stack.length) {
+    const current = stack.pop()
+    let entries = []
+    try { entries = readdirSync(current) } catch { continue }
+    for (const entry of entries) {
+      const full = join(current, entry)
+      let stat
+      try { stat = statSync(full) } catch { continue }
+      if (stat.isDirectory()) stack.push(full)
+      else if (match(full, stat)) files.push(full)
+    }
+  }
+  return files
+}
+
+function recentPageSources() {
+  const cutoff = Date.now() - DAY_MS
+  return walk(PAGES, (file, stat) => extname(file) === '.ts' && stat.mtimeMs >= cutoff)
+}
+
+function outFiles() {
+  return new Set(walk(OUT, file => true).map(file => relative(OUT, file)))
+}
+
+function prefixForSource(source) {
+  const rel = relative(PAGES, source)
+  const parts = rel.split(/[\\/]/).filter(Boolean)
+  const stem = basename(source).replace(/\.[^.]+$/, '')
+  const scope = parts.length > 1 ? parts.slice(0, -1).join('-') : 'page'
+  return stem === 'index' ? `${scope}-` : `${scope}-`
+}
+
+async function quiet(fn) {
+  const out = console.log
+  const err = console.error
+  console.log = (...args) => err(...args)
+  console.error = (...args) => err(...args)
+  try { return await fn() }
+  finally {
+    console.log = out
+    console.error = err
+  }
+}
+
+function prologAtom(value) {
+  return `'${String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+}
+
+function queryGovernance(goal) {
+  const program = readFileSync(GOVERNANCE, 'utf8')
+  return new Promise((resolve, reject) => {
+    const session = pl.create(1000)
+    session.consult(program, {
+      success: () => {
+        session.query(goal, {
+          success: () => {
+            session.answer(answer => resolve(answer !== false))
+          },
+          error: reject,
+        })
+      },
+      error: reject,
+    })
+  })
+}
+
+async function agentAllowed(name, phase) {
+  return queryGovernance(`agent_allowed(${prologAtom(name)}, ${prologAtom(phase)}).`)
+}
+
+async function statusAllowed(name, status) {
+  return queryGovernance(`status_verdict(${prologAtom(name)}, ${prologAtom(status)}, 'ALLOW').`)
+}
+
+async function dispatchGate(type) {
+  const allowed = await queryGovernance(`dispatch_verdict(${prologAtom(type)}, 'resurrect', 'ACCEPTED').`)
+  return { allowed, agent: 'resurrect', status: allowed ? 'ACCEPTED' : 'REJECTED' }
+}
+
+async function sealed(name, status, payload = {}) {
+  const allowed = await statusAllowed(name, status)
+  const finalStatus = allowed ? status : 'REJECTED'
+  const governance = allowed ? 'tau-prolog:allow' : 'tau-prolog:reject'
+  const { seal } = sealEvent(name, 'agent-result', { status: finalStatus, governance, ...payload })
+  return { name, status: finalStatus, seal, governance }
+}
+
+async function requireAgent(name, phase) {
+  if (await agentAllowed(name, phase)) return
+  throw new Error(`tau_prolog_denied:${phase}:${name}`)
+}
+
+function writeJsonLine(message) {
+  const line = JSON.stringify(message) + '\n'
+  process.stdout.write(line)
+  for (const socket of relaySockets) {
+    if (!socket.destroyed) socket.write(encodeWsFrame(JSON.stringify(message)))
+  }
+}
+
+async function runTick() {
+  if (running) return
+  running = true
+  tick += 1
+  const ts = new Date().toISOString()
+  const agents = []
+
+  try {
+    mkdirSync(PUBLIC, { recursive: true })
+    mkdirSync(OUT, { recursive: true })
+
+    await requireAgent('icp-verifier', 'tick')
+    const icp = await quiet(() => verifyOnce({}))
+    if (icp.status === 'DRIFT_DETECTED') {
+      const incident = sealEvent('ORCHESTRATOR', 'icp-drift-incident', { tick, ts, icp })
+      agents.push(await sealed('icp-verifier', 'DRIFT_DETECTED', { internalSeal: incident.seal }))
+      writeJsonLine({ tick, ts, agents })
+      return
+    }
+    agents.push(await sealed('icp-verifier', icp.status || 'VERIFIED', { internalSeal: icp.seal }))
+
+    await requireAgent('metric-stream', 'tick')
+    const metrics = await quiet(() => runMetrics({
+      repoPath: ROOT,
+      outPath: join(PUBLIC, 'metrics.json'),
+    }))
+    agents.push(await sealed('metric-stream', 'UPDATED', { internalSeal: metrics.wormSeal }))
+
+    await requireAgent('bifrost-translator', 'tick')
+    const before = outFiles()
+    const sources = recentPageSources()
+    const translations = []
+    for (const sourcePath of sources) {
+      const result = await quiet(() => runBifrost({
+        sourcePath,
+        targets: ['rust', 'lean4'],
+        outDir: OUT,
+        namePrefix: prefixForSource(sourcePath),
+      }))
+      translations.push(result)
+    }
+    agents.push(await sealed('bifrost-translator', sources.length ? 'TRANSLATED' : 'IDLE', {
+      files: sources.length,
+      internalSeals: translations.map(r => r.seal).filter(Boolean),
+    }))
+
+    await requireAgent('watermark', 'tick')
+    const after = outFiles()
+    const newFiles = [...after].filter(file => !before.has(file))
+    const watermark = await quiet(() => runWatermark({ target: OUT }))
+    agents.push(await sealed('watermark', watermark.marks.length ? 'WATERMARKED' : 'IDLE', {
+      files: newFiles,
+      filesMarked: watermark.marks.length,
+      internalSeal: watermark.seal,
+    }))
+
+    writeJsonLine({ tick, ts, agents })
+  } catch (error) {
+    const incident = sealEvent('ORCHESTRATOR', 'tick-error', { tick, ts, message: error.message })
+    agents.push(await sealed('orchestrator', 'ERROR', { internalSeal: incident.seal, message: error.message }))
+    writeJsonLine({ tick, ts, agents })
+  } finally {
+    running = false
+  }
+}
+
+function encodeWsFrame(text) {
+  const body = Buffer.from(text)
+  if (body.length < 126) return Buffer.concat([Buffer.from([0x81, body.length]), body])
+  if (body.length <= 0xffff) {
+    const header = Buffer.alloc(4)
+    header[0] = 0x81
+    header[1] = 126
+    header.writeUInt16BE(body.length, 2)
+    return Buffer.concat([header, body])
+  }
+  const header = Buffer.alloc(10)
+  header[0] = 0x81
+  header[1] = 127
+  header.writeBigUInt64BE(BigInt(body.length), 2)
+  return Buffer.concat([header, body])
+}
+
+function decodeWsFrame(buffer) {
+  if (buffer.length < 2) return null
+  const opcode = buffer[0] & 0x0f
+  if (opcode === 0x8) return { close: true }
+  const masked = (buffer[1] & 0x80) !== 0
+  let len = buffer[1] & 0x7f
+  let offset = 2
+  if (len === 126) {
+    if (buffer.length < 4) return null
+    len = buffer.readUInt16BE(2)
+    offset = 4
+  } else if (len === 127) {
+    if (buffer.length < 10) return null
+    len = Number(buffer.readBigUInt64BE(2))
+    offset = 10
+  }
+  const maskOffset = offset
+  if (masked) offset += 4
+  if (buffer.length < offset + len) return null
+  const payload = Buffer.from(buffer.slice(offset, offset + len))
+  if (masked) {
+    const mask = buffer.slice(maskOffset, maskOffset + 4)
+    for (let i = 0; i < payload.length; i += 1) payload[i] ^= mask[i % 4]
+  }
+  return { text: payload.toString('utf8') }
+}
+
+function acceptHandshake(socket, request) {
+  const key = request.match(/Sec-WebSocket-Key:\s*(.+)\r?\n/i)?.[1]?.trim()
+  if (!key) {
+    socket.destroy()
+    return false
+  }
+  const accept = createHash('sha1')
+    .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+    .digest('base64')
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
+  )
+  relaySockets.add(socket)
+  socket.once('close', () => relaySockets.delete(socket))
+  socket.once('error', () => relaySockets.delete(socket))
+  return true
+}
+
+async function handleRelayMessage(text) {
+  let message
+  try { message = JSON.parse(text) } catch { return }
+  if (typeof message.type !== 'string' || !message.type.endsWith(':dispatch')) return
+
+  tick += 1
+  const ts = new Date().toISOString()
+  const gate = await dispatchGate(message.type)
+  if (!gate.allowed) {
+    const rejected = await sealed(gate.agent, gate.status, {
+      repo: message.repo,
+      dryRun: Boolean(message.dryRun),
+      reason: 'tau_prolog_dispatch_denied',
+    })
+    writeJsonLine({
+      tick,
+      ts,
+      type: 'ransom_worm:rejected',
+      repo: message.repo,
+      dryRun: Boolean(message.dryRun),
+      agents: [rejected],
+    })
+    return
+  }
+
+  const accepted = await sealed(gate.agent, gate.status, {
+    repo: message.repo,
+    dryRun: Boolean(message.dryRun),
+  })
+  writeJsonLine({
+    tick,
+    ts,
+    type: 'ransom_worm:accepted',
+    repo: message.repo,
+    dryRun: Boolean(message.dryRun),
+    agents: [accepted],
+  })
+}
+
+function startRelay(port) {
+  const server = createServer(socket => {
+    let handshaken = false
+    let pending = Buffer.alloc(0)
+
+    socket.on('data', chunk => {
+      if (!handshaken) {
+        const request = chunk.toString('utf8')
+        if (!request.includes('\r\n\r\n')) return
+        handshaken = acceptHandshake(socket, request)
+        return
+      }
+
+      pending = Buffer.concat([pending, chunk])
+      const frame = decodeWsFrame(pending)
+      if (!frame) return
+      pending = Buffer.alloc(0)
+      if (frame.close) {
+        socket.end()
+        return
+      }
+      handleRelayMessage(frame.text).catch(error => {
+        const incident = sealEvent('ORCHESTRATOR', 'relay-error', { message: error.message })
+        writeJsonLine({
+          tick,
+          ts: new Date().toISOString(),
+          type: 'relay:error',
+          message: error.message,
+          seal: incident.seal,
+        })
+      })
+    })
+  })
+
+  server.listen(port, '127.0.0.1', () => {
+    const address = server.address()
+    const boundPort = typeof address === 'object' && address ? address.port : port
+    writeJsonLine({ type: 'relay:ready', port: boundPort })
+  })
+  server.on('error', error => {
+    writeJsonLine({ type: 'relay:error', message: error.message })
+  })
+}
+
+function start() {
+  const args = parseArgs()
+  const relayPort = Number.parseInt(process.env.ORCHESTRATE_WS_PORT || '', 10)
+  if (Number.isInteger(relayPort)) startRelay(relayPort)
+  runTick()
+  if (!args.once) setInterval(runTick, args.interval)
+}
+
+start()

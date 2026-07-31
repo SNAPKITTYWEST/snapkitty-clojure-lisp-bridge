@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SnapKitty — Sovereign Agent Emulator</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SnapKitty" />
+<meta name="theme-color" content="#7c3aed" />
+<link rel="manifest" href="manifest.json" />
+<script>
+(function(){
+  var c=document.createElement('canvas');c.width=c.height=192;
+  var x=c.getContext('2d');
+  x.fillStyle='#04040a';x.fillRect(0,0,192,192);
+  x.fillStyle='#7c3aed';x.beginPath();x.arc(96,96,80,0,Math.PI*2);x.fill();
+  x.fillStyle='#fff';x.font='bold 72px monospace';x.textAlign='center';x.textBaseline='middle';
+  x.fillText('⬡',96,100);
+  var png=c.toDataURL('image/png');
+  var l=document.createElement('link');l.rel='apple-touch-icon';l.href=png;
+  document.head.appendChild(l);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Space Mono",monospace;background:#0d0d0f;color:#e8e8f0;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0a0a0e}
+::-webkit-scrollbar-thumb{background:#1e1e2a;border-radius:2px}
+button{cursor:pointer;font-family:"Space Mono",monospace}
+input,select,textarea{font-family:"Space Mono",monospace}
+
+#topbar{height:36px;background:#0a0a0e;border-bottom:1px solid #1e1e2a;display:flex;align-items:center;padding:0 12px;gap:12px;flex-shrink:0;position:relative;z-index:100}
+#topbar .logo{color:#00ff88;font-weight:700;font-size:11px;letter-spacing:2px}
+#topbar .ver{color:#444;font-size:10px}
+#topbar .menus{display:flex;gap:4px;margin-left:8px;position:relative}
+.menu-item{position:relative}
+.menu-item > button.menu-btn{background:none;border:none;color:#888;font-size:10px;padding:4px 8px;border-radius:3px}
+.menu-item > button.menu-btn:hover,.menu-item.open > button.menu-btn{background:#1e1e2a;color:#e8e8f0}
+.menu-dropdown{display:none;position:absolute;top:100%;left:0;min-width:180px;background:#131318;border:1px solid #1e1e2a;border-radius:4px;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.6);z-index:200}
+.menu-item.open .menu-dropdown{display:block}
+.menu-dropdown button{display:block;width:100%;text-align:left;background:none;border:none;color:#ccc;font-size:10px;padding:6px 12px}
+.menu-dropdown button:hover{background:#1e1e2a;color:#00ff88}
+.menu-dropdown .sep{height:1px;background:#1e1e2a;margin:4px 0}
+.menu-dropdown .hint{float:right;color:#444;font-size:9px}
+#topbar .status{display:flex;gap:12px;margin-left:auto;align-items:center}
+#topbar .status span{color:#444;font-size:10px}
+#sim-badge{font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid #1e1e2a}
+#sim-badge.running{color:#00ff88;border-color:#00ff8833}
+#sim-badge.paused{color:#ffd60a;border-color:#ffd60a33}
+
+#main{flex:1;display:flex;overflow:hidden}
+#left{width:220px;background:#131318;border-right:1px solid #1e1e2a;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+#left .panel-title{padding:8px 10px;border-bottom:1px solid #1e1e2a;font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase}
+#tree{flex:1;overflow-y:auto}
+.group-header{padding:5px 8px;font-size:9px;color:#888;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;gap:4px;border-bottom:1px solid #1e1e2a18;user-select:none}
+.group-header .count{margin-left:auto;color:#333;font-size:8px}
+.group-header .arrow{font-size:7px;transition:transform .15s}
+.group-header.open .arrow{transform:rotate(90deg)}
+.agent-row{padding:5px 10px 5px 22px;cursor:pointer;font-size:10px;display:flex;align-items:center;gap:7px;user-select:none;transition:background .15s;border-left:2px solid transparent}
+.agent-row:hover{background:#ffffff08}
+.agent-row.active{border-left-color:var(--agent-color);background:color-mix(in srgb,var(--agent-color) 10%,transparent)}
+.agent-row .name{color:#e8e8f0}
+.agent-row.active .name{color:var(--agent-color)}
+.agent-row .dot{margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--agent-color);flex-shrink:0;display:none}
+.agent-row.has-msgs .dot{display:block}
+
+#center{flex:1;display:flex;align-items:center;justify-content:center;background:#0d0d0f;position:relative;overflow:hidden}
+#canvas-grid{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,#1e1e2a22 0,#1e1e2a22 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,#1e1e2a22 0,#1e1e2a22 1px,transparent 1px,transparent 32px)}
+#phone-label{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-size:9px;color:#333;letter-spacing:2px;white-space:nowrap}
+
+#phone{width:300px;height:630px;background:#1a1a1a;border-radius:44px;box-shadow:0 0 0 2px #333,0 0 0 4px #222,0 30px 80px rgba(0,0,0,.8);position:relative;flex-shrink:0;z-index:1;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a2a;transition:box-shadow .3s}
+.side-btn{position:absolute;width:3px;height:40px;background:#333;border-radius:2px 0 0 2px}
+.side-btn-right{right:-3px;top:140px;height:70px;border-radius:0 2px 2px 0}
+#screen{margin:10px 6px 6px;flex:1;background:#000;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+#punch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:#000;border-radius:50%;border:1px solid #222;z-index:10}
+#statusbar{height:28px;background:#050508;display:flex;align-items:center;padding:0 16px;flex-shrink:0;z-index:5}
+#clock{font-size:9px;color:#e8e8f0;font-weight:700}
+#status-icons{display:flex;align-items:center;gap:5px;margin-left:auto}
+#screen-content{flex:1;position:relative;overflow:hidden}
+
+#home-screen{height:100%;background:linear-gradient(160deg,#050510,#0a0a18);display:flex;flex-direction:column}
+#home-label{padding:8px 14px 4px;font-size:9px;color:#333}
+#app-grid{padding:4px 10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1;align-content:start;overflow-y:auto}
+.app-icon{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;user-select:none}
+.app-icon .icon-wrap{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:transform .1s}
+.app-icon:active .icon-wrap{transform:scale(.9)}
+.app-icon span{font-size:7.5px;color:#888;text-align:center;line-height:1.2}
+#dock{height:72px;border-top:1px solid #1e1e2a;display:flex;align-items:center;justify-content:space-around;padding:0 12px;flex-shrink:0}
+.dock-icon{width:42px;height:42px;border-radius:12px;background:#1e1e2a;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;border:1px solid transparent;transition:border .15s,background .15s}
+.dock-icon:hover{border-color:#00ff8844;background:#1e1e2aee}
+#navbar-home,#navbar-chat,#navbar-app{height:28px;display:flex;align-items:center;justify-content:space-around;padding:0 40px;flex-shrink:0}
+#navbar-home span,#navbar-chat span,#navbar-app span{color:#444;font-size:14px;cursor:pointer}
+#navbar-home span:hover,#navbar-chat span:hover,#navbar-app span:hover{color:#888}
+
+#chat-screen,#browser-screen,#term-screen,#worm-screen,#const-screen{height:100%;display:none;flex-direction:column;background:#030306}
+#chat-appbar,.app-bar{padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1e1e2a;background:#050508;flex-shrink:0}
+.back-btn{background:none;border:none;font-size:14px;padding:0;color:#00ff88}
+#chat-agent-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+#chat-agent-name{font-size:11px;font-weight:700}
+#chat-agent-role{font-size:8px;color:#888}
+#chat-status-dot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#00ff88;box-shadow:0 0 6px #00ff88;flex-shrink:0}
+#messages{flex:1;overflow-y:auto;padding:10px 10px 6px;display:flex;flex-direction:column;gap:6px}
+.msg{display:flex}
+.msg.user{justify-content:flex-end}
+.msg.agent{justify-content:flex-start}
+.bubble{max-width:78%;padding:6px 9px;font-size:9.5px;line-height:1.5;word-break:break-word;white-space:pre-wrap}
+.bubble.user{background:#0a84ff;border-radius:12px 12px 2px 12px;color:#fff}
+.bubble.agent{border-radius:12px 12px 12px 2px;color:#e8e8f0}
+.bubble.sys{background:#1e1e2a;border-radius:8px;color:#888;font-size:8px;max-width:100%}
+#empty-state{text-align:center;margin-top:40px;color:#444;font-size:9px}
+#empty-icon{font-size:28px;margin-bottom:8px}
+#input-bar{padding:6px 8px;border-top:1px solid #1e1e2a;display:flex;gap:6px;background:#050508;flex-shrink:0}
+#msg-input{flex:1;background:#0a0a14;border:1px solid #1e1e2a;border-radius:20px;padding:6px 10px;color:#e8e8f0;font-size:9.5px;outline:none}
+#send-btn{width:30px;height:30px;border-radius:50%;border:none;font-size:13px;flex-shrink:0;transition:opacity .15s}
+#send-btn:disabled{opacity:.4}
+
+/* Browser */
+#browser-toolbar{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid #1e1e2a;background:#050508;flex-shrink:0;align-items:center}
+#browser-toolbar button{background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;border-radius:6px;width:26px;height:26px;font-size:11px}
+#browser-url{flex:1;background:#0a0a14;border:1px solid #1e1e2a;border-radius:12px;padding:4px 8px;color:#e8e8f0;font-size:9px;outline:none}
+#browser-frame-wrap{flex:1;position:relative;background:#0a0a14;overflow:hidden}
+#browser-frame{width:100%;height:100%;border:none;background:#fff}
+#browser-fallback{position:absolute;inset:0;display:none;flex-direction:column;padding:10px;overflow:auto;background:#030306}
+#browser-fallback .url-line{font-size:8px;color:#0a84ff;margin-bottom:8px;word-break:break-all}
+#browser-fallback pre{font-size:8px;color:#aaa;white-space:pre-wrap;word-break:break-word;line-height:1.4}
+#browser-status{font-size:8px;color:#444;padding:4px 8px;border-top:1px solid #1e1e2a;flex-shrink:0}
+
+/* Terminal */
+#term-out{flex:1;overflow-y:auto;padding:8px;font-size:9px;line-height:1.55;color:#00ff88;background:#020208}
+#term-out .in{color:#0a84ff}
+#term-out .out{color:#c8c8d0}
+#term-out .err{color:#ff453a}
+#term-out .sys{color:#888}
+#term-in-bar{display:flex;gap:4px;padding:6px 8px;border-top:1px solid #1e1e2a;background:#050508;flex-shrink:0;align-items:center}
+#term-prompt{font-size:9px;color:#00ff88;flex-shrink:0}
+#term-input{flex:1;background:transparent;border:none;color:#e8e8f0;font-size:9.5px;outline:none}
+#term-agent-sel{background:#0a0a14;border:1px solid #1e1e2a;color:#ccc;font-size:8px;border-radius:4px;padding:2px 4px;max-width:90px}
+
+/* WORM / Constitution shared */
+.scroll-panel{flex:1;overflow-y:auto;padding:8px;font-size:9px;line-height:1.5}
+.worm-entry{border:1px solid #1e1e2a;border-radius:6px;padding:6px 8px;margin-bottom:6px;background:#0a0a14}
+.worm-entry .meta{color:#444;font-size:8px;margin-bottom:4px}
+.worm-entry .hash{color:#0a84ff;font-size:7.5px;word-break:break-all}
+.worm-entry .body{color:#ccc}
+.const-rule{border-left:2px solid #bf5af2;padding:4px 8px;margin-bottom:6px;background:#0a0a14}
+.const-rule .pred{color:#bf5af2}
+.const-rule .body{color:#888;font-size:8px}
+.badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:8px}
+.badge.ok{background:#00ff8822;color:#00ff88}
+.badge.deny{background:#ff453a22;color:#ff453a}
+.badge.pend{background:#ffd60a22;color:#ffd60a}
+
+#incoming-call{position:absolute;inset:0;background:rgba(0,0,0,.95);z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#call-icon{font-size:40px}
+#call-name{font-size:14px;font-weight:700}
+#call-role{font-size:9px;color:#888}
+#call-label{font-size:9px;color:#333}
+#call-btns{display:flex;gap:24px;margin-top:24px}
+#call-btns button{width:52px;height:52px;border-radius:50%;border:none;font-size:20px}
+
+#right{width:240px;background:#131318;border-left:1px solid #1e1e2a;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+#right .panel-title{padding:8px 10px;border-bottom:1px solid #1e1e2a;font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase}
+#inspector-card{padding:12px 10px;border-bottom:1px solid #1e1e2a}
+#inspector-agent-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+#inspector-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+#inspector-name{font-size:11px;font-weight:700}
+#inspector-role{font-size:8.5px;color:#888}
+#inspector-group{font-size:7.5px;color:#333}
+.prop-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1e1e2a20}
+.prop-key{font-size:8.5px;color:#444}
+.prop-val{font-size:8.5px;color:#e8e8f0}
+.prop-val.online{color:#00ff88}
+#gate-scores{padding:10px;border-bottom:1px solid #1e1e2a}
+#gate-scores .section-label,.section-label{font-size:9px;color:#888;letter-spacing:1px;margin-bottom:8px}
+.gate-row{margin-bottom:6px}
+.gate-header{display:flex;justify-content:space-between;margin-bottom:2px}
+.gate-label{font-size:8px;color:#444}
+.gate-val{font-size:8px}
+.gate-bar-bg{height:3px;background:#1e1e2a;border-radius:2px}
+.gate-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+#agent-grid-panel{flex:1;overflow-y:auto;padding:8px}
+#agent-grid-icons{display:flex;flex-wrap:wrap;gap:5px}
+.grid-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:border .15s}
+
+#bottom{height:130px;border-top:1px solid #1e1e2a;background:#080810;flex-shrink:0;display:flex;flex-direction:column}
+#logcat-header{padding:4px 10px;border-bottom:1px solid #1e1e2a;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#logcat-header .label{font-size:9px;color:#888;letter-spacing:1.5px}
+#logcat-header .subject{font-size:8px;color:#333}
+#nats-status{font-size:8px}
+#logcat-body{flex:1;overflow-y:auto;padding:4px 10px}
+.log-entry{font-size:8.5px;line-height:1.7}
+.log-ts{color:#333}
+.log-subject{color:#0a84ff}
+.log-subject.error{color:#ff453a}
+.log-subject.warn{color:#ffd60a}
+.log-payload{color:#888}
+
+#help-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
+#help-modal.open{display:flex}
+#help-box{background:#131318;border:1px solid #1e1e2a;border-radius:10px;padding:16px 20px;max-width:420px;width:90%;max-height:80vh;overflow:auto}
+#help-box h2{font-size:12px;color:#00ff88;margin-bottom:10px}
+#help-box table{width:100%;border-collapse:collapse;font-size:10px}
+#help-box td{padding:4px 6px;border-bottom:1px solid #1e1e2a}
+#help-box td:first-child{color:#0a84ff;width:60px}
+#help-box .close-help{margin-top:12px;background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;padding:6px 12px;border-radius:4px;font-size:10px}
+
+@media (max-width:600px),(display-mode:standalone){
+  #left,#right,#canvas-grid,#phone-label{display:none!important}
+  #center{background:#000!important;align-items:stretch!important;justify-content:stretch!important}
+  #phone{width:100%!important;height:100%!important;border-radius:0!important;box-shadow:none!important;border:none!important;background:#000!important}
+  .side-btn{display:none!important}
+  #screen{margin:0!important;border-radius:0!important;background:#050508!important}
+  #statusbar{padding-top:env(safe-area-inset-top);height:calc(28px + env(safe-area-inset-top))!important}
+  #punch{display:none!important}
+  #main{flex-direction:column!important}
+  #bottom{height:120px!important;flex-shrink:0!important}
+  .app-icon .icon-wrap{width:54px!important;height:54px!important;font-size:22px!important}
+  .dock-icon{width:52px!important;height:52px!important;font-size:20px!important}
+  #msg-input{font-size:12px!important;padding:8px 12px!important}
+  .bubble{font-size:11px!important}
+  #chat-agent-name{font-size:13px!important}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="logo">SOVEREIGN IDE</span>
+  <span class="ver">v∞.1</span>
+  <div class="menus">
+    <div class="menu-item" data-menu="file">
+      <button class="menu-btn" type="button">File</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="worm-dump">Dump World State <span class="hint">W</span></button>
+        <button type="button" data-action="export-json">Export Session JSON</button>
+        <div class="sep"></div>
+        <button type="button" data-action="clear-ledger">Clear Ledger (testnet) <span class="hint">C</span></button>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="edit">
+      <button class="menu-btn" type="button">Edit</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="focus-term">Focus Terminal</button>
+        <button type="button" data-action="focus-browser">Focus Browser</button>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="view">
+      <button class="menu-btn" type="button">View</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="open-home">Home</button>
+        <button type="button" data-action="open-worm">WORM Ledger</button>
+        <button type="button" data-action="open-const">Constitution <span class="hint">?</span></button>
+        <button type="button" data-action="open-term">Terminal</button>
+        <button type="button" data-action="open-browser">Browser</button>
+        <button type="button" data-action="open-vm">VM Editor</button>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="run">
+      <button class="menu-btn" type="button">Run</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="step">Step Clock <span class="hint">Space</span></button>
+        <button type="button" data-action="toggle-pause">Pause / Resume <span class="hint">P</span></button>
+        <button type="button" data-action="verify">Verify Chain <span class="hint">V</span></button>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="tools">
+      <button class="menu-btn" type="button">Tools</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="open-term">Bash In / Out</button>
+        <button type="button" data-action="open-browser">Web Browser</button>
+        <button type="button" data-action="incoming-call">Simulate Incoming Call</button>
+        <button type="button" data-action="agent-tick">Force Agent Tick</button>
+      </div>
+    </div>
+    <div class="menu-item" data-menu="help">
+      <button class="menu-btn" type="button">Help</button>
+      <div class="menu-dropdown">
+        <button type="button" data-action="show-help">Keyboard Shortcuts</button>
+        <button type="button" data-action="open-const">Show Constitution</button>
+      </div>
+    </div>
+  </div>
+  <div class="status">
+    <span id="sim-badge" class="running">SIM ● RUN</span>
+    <span>WORM: <span id="worm-count" style="color:#0a84ff">0</span></span>
+    <span>Mesh: <span style="color:#00ff88">ONLINE</span></span>
+    <span>NATS: <span id="nats-dot">●</span></span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="left">
+    <div class="panel-title">Project &nbsp;/&nbsp; Agents</div>
+    <div id="tree"></div>
+  </div>
+
+  <div id="center">
+    <div id="canvas-grid"></div>
+    <div id="phone-label">Google Pixel 9 Pro &nbsp;•&nbsp; SnapKitty OS &nbsp;•&nbsp; 6.1"</div>
+
+    <div id="phone">
+      <div class="side-btn" style="left:-3px;top:120px"></div>
+      <div class="side-btn" style="left:-3px;top:175px"></div>
+      <div class="side-btn side-btn-right"></div>
+
+      <div id="screen">
+        <div id="punch"></div>
+        <div id="statusbar">
+          <span id="clock">00:00</span>
+          <div id="status-icons">
+            <canvas id="signal-canvas" width="22" height="14"></canvas>
+            <span style="font-size:9px;color:#e8e8f0">5G</span>
+            <canvas id="battery-canvas" width="22" height="10"></canvas>
+          </div>
+        </div>
+
+        <div id="screen-content">
+          <div id="incoming-call">
+            <div id="call-icon"></div>
+            <div id="call-name"></div>
+            <div id="call-role"></div>
+            <div id="call-label">Incoming sovereign call…</div>
+            <div id="call-btns">
+              <button id="decline-btn" style="background:#ff453a">✕</button>
+              <button id="answer-btn" style="background:#00ff88">✓</button>
+            </div>
+          </div>
+
+          <div id="home-screen" style="display:flex">
+            <div id="home-label">SnapKitty OS &nbsp;•&nbsp; Agents · Browser · Bash</div>
+            <div id="app-grid"></div>
+            <div id="dock">
+              <div class="dock-icon" data-dock="phone" title="Call">📞</div>
+              <div class="dock-icon" data-dock="messages" title="Messages">💬</div>
+              <div class="dock-icon" data-dock="browser" title="Browser">🌐</div>
+              <div class="dock-icon" data-dock="term" title="Terminal">⌨</div>
+            </div>
+            <div id="navbar-home">
+              <span data-nav="back">◁</span>
+              <span data-nav="home">●</span>
+              <span data-nav="recents">□</span>
+            </div>
+          </div>
+
+          <div id="chat-screen">
+            <div id="chat-appbar">
+              <button id="chat-back" class="back-btn" type="button">◁</button>
+              <div id="chat-agent-icon"></div>
+              <div>
+                <div id="chat-agent-name"></div>
+                <div id="chat-agent-role"></div>
+              </div>
+              <div id="chat-status-dot"></div>
+            </div>
+            <div id="messages">
+              <div id="empty-state">
+                <div id="empty-icon"></div>
+                <div id="empty-text"></div>
+                <div id="empty-sub"></div>
+              </div>
+            </div>
+            <div id="input-bar">
+              <input id="msg-input" placeholder="Message agent…  /browse  /bash" />
+              <button id="send-btn" type="button" disabled>▶</button>
+            </div>
+            <div id="navbar-chat">
+              <span id="nav-back">◁</span>
+              <span id="nav-home-btn">●</span>
+              <span id="nav-recents-chat">□</span>
+            </div>
+          </div>
+
+          <div id="browser-screen">
+            <div class="app-bar">
+              <button class="back-btn" type="button" data-go-home>◁</button>
+              <div style="flex:1">
+                <div style="font-size:11px;font-weight:700;color:#0a84ff">BROWSER</div>
+                <div style="font-size:8px;color:#888">Agent web · governed fetch</div>
+              </div>
+            </div>
+            <div id="browser-toolbar">
+              <button type="button" id="browser-back" title="Back">←</button>
+              <button type="button" id="browser-fwd" title="Forward">→</button>
+              <button type="button" id="browser-reload" title="Reload">↻</button>
+              <input id="browser-url" placeholder="https://… or search" />
+              <button type="button" id="browser-go" title="Go">▶</button>
+            </div>
+            <div id="browser-frame-wrap">
+              <iframe id="browser-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="Sovereign Browser"></iframe>
+              <div id="browser-fallback">
+                <div class="url-line" id="fallback-url"></div>
+                <pre id="fallback-body"></pre>
+              </div>
+            </div>
+            <div id="browser-status">idle</div>
+            <div id="navbar-app">
+              <span data-nav="back">◁</span>
+              <span data-nav="home">●</span>
+              <span data-nav="recents">□</span>
+            </div>
+          </div>
+
+          <div id="term-screen">
+            <div class="app-bar">
+              <button class="back-btn" type="button" data-go-home>◁</button>
+              <div style="flex:1">
+                <div style="font-size:11px;font-weight:700;color:#00ff88">BASH · IN / OUT</div>
+                <div style="font-size:8px;color:#888">Virtual shell · constitution-gated</div>
+              </div>
+              <select id="term-agent-sel" title="Acting agent"></select>
+            </div>
+            <div id="term-out"></div>
+            <div id="term-in-bar">
+              <span id="term-prompt">$</span>
+              <input id="term-input" autocomplete="off" spellcheck="false" placeholder="bash in — type help" />
+            </div>
+            <div id="navbar-app">
+              <span data-nav="back">◁</span>
+              <span data-nav="home">●</span>
+              <span data-nav="recents">□</span>
+            </div>
+          </div>
+
+          <div id="worm-screen">
+            <div class="app-bar">
+              <button class="back-btn" type="button" data-go-home>◁</button>
+              <div style="flex:1">
+                <div style="font-size:11px;font-weight:700;color:#0a84ff">WORM LEDGER</div>
+                <div style="font-size:8px;color:#888">Append-only · SHA-256 chained</div>
+              </div>
+              <button type="button" id="worm-verify-btn" style="background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;font-size:8px;padding:4px 8px;border-radius:4px">Verify</button>
+            </div>
+            <div class="scroll-panel" id="worm-list"></div>
+            <div id="navbar-app">
+              <span data-nav="back">◁</span>
+              <span data-nav="home">●</span>
+              <span data-nav="recents">□</span>
+            </div>
+          </div>
+
+          <div id="const-screen">
+            <div class="app-bar">
+              <button class="back-btn" type="button" data-go-home>◁</button>
+              <div style="flex:1">
+                <div style="font-size:11px;font-weight:700;color:#bf5af2">CONSTITUTION</div>
+                <div style="font-size:8px;color:#888">Prolog-style can_execute/2</div>
+              </div>
+            </div>
+            <div class="scroll-panel" id="const-list"></div>
+            <div id="navbar-app">
+              <span data-nav="back">◁</span>
+              <span data-nav="home">●</span>
+              <span data-nav="recents">□</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VM Editor Screen -->
+  <div id="vm-editor-screen" style="display:none;flex-direction:column;background:#030306">
+    <div class="app-bar">
+      <button class="back-btn" type="button" data-go-home>◁</button>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:700;color:#00ff88">VM EDITOR</div>
+        <div style="font-size:8px;color:#888">Virtual Machine State Editor</div>
+      </div>
+      <button type="button" id="vm-save-btn" style="background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;font-size:8px;padding:4px 8px;border-radius:4px">Save</button>
+    </div>
+    <div class="scroll-panel" id="vm-editor-content">
+      <div style="padding:8px">
+        <div class="section-label">Virtual Filesystem</div>
+        <div id="vfs-editor" style="margin-bottom:12px">
+          <div style="display:flex;gap:4px;margin-bottom:6px">
+            <input id="vfs-path-input" placeholder="/path/to/file" style="flex:1;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px 8px;color:#e8e8f0;font-size:9px;outline:none" />
+            <button type="button" id="vfs-read-btn" style="background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;border-radius:4px;padding:4px 8px;font-size:8px">Read</button>
+            <button type="button" id="vfs-write-btn" style="background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;border-radius:4px;padding:4px 8px;font-size:8px">Write</button>
+            <button type="button" id="vfs-new-btn" style="background:#1e1e2a;border:1px solid #2a2a2a;color:#ccc;border-radius:4px;padding:4px 8px;font-size:8px">New</button>
+          </div>
+          <textarea id="vfs-file-editor" style="width:100%;height:120px;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:8px;color:#e8e8f0;font-size:9px;outline:none;font-family:monospace;resize:none"></textarea>
+        </div>
+        <div class="section-label">VM State</div>
+        <div id="vm-state-editor" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:8px;color:#444;margin-bottom:4px">Tick</div>
+            <input id="vm-tick-input" type="number" style="width:100%;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px;color:#e8e8f0;font-size:9px;outline:none" />
+          </div>
+          <div>
+            <div style="font-size:8px;color:#444;margin-bottom:4px">Paused</div>
+            <select id="vm-paused-select" style="width:100%;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px;color:#e8e8f0;font-size:9px;outline:none">
+              <option value="false">Running</option>
+              <option value="true">Paused</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#444;margin-bottom:4px">Active Agent</div>
+            <select id="vm-agent-select" style="width:100%;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px;color:#e8e8f0;font-size:9px;outline:none"></select>
+          </div>
+          <div>
+            <div style="font-size:8px;color:#444;margin-bottom:4px">WORM Blocks</div>
+            <input id="vm-worm-input" type="number" style="width:100%;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px;color:#e8e8f0;font-size:9px;outline:none" />
+          </div>
+        </div>
+        <div class="section-label">Council Configuration</div>
+        <div id="council-config" style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:4px">
+            <select id="council-available" style="flex:1;background:#0a0a14;border:1px solid #1e1e2a;border-radius:4px;padding:4px;color:#e8e8f0;font-size:9px;outline:none"></select>
+            <button type="button" id="council-add-btn" style="background:#00ff88;border:1px solid #00ff88;color:#000;border-radius:4px;padding:4px 8px;font-size:8px">Add</button>
+          </div>
+          <div id="council-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
+      </div>
+    </div>
+    <div id="navbar-app">
+      <span data-nav="back">◁</span>
+      <span data-nav="home">●</span>
+      <span data-nav="recents">□</span>
+    </div>
+  </div>
+
+  <!-- Council Vote Modal -->
+  <div id="council-vote-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;align-items:center;justify-content:center">
+    <div style="background:#131318;border:1px solid #1e1e2a;border-radius:12px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:#00ff88">COUNCIL VOTE</div>
+        <button type="button" id="vote-close-btn" style="background:none;border:none;color:#888;font-size:14px;cursor:pointer">✕</button>
+      </div>
+      <div id="vote-proposal" style="background:#0a0a14;border-radius:6px;padding:12px;margin-bottom:12px">
+        <div style="font-size:9px;color:#444;margin-bottom:4px">Proposal</div>
+        <div id="vote-agent" style="font-size:10px;color:#e8e8f0;margin-bottom:4px"></div>
+        <div id="vote-action" style="font-size:10px;color:#0a84ff;margin-bottom:4px"></div>
+        <div id="vote-payload" style="font-size:8px;color:#888;word-break:break-word"></div>
+      </div>
+      <div id="vote-results" style="margin-bottom:12px">
+        <div style="font-size:9px;color:#444;margin-bottom:6px">Votes Required: <span id="vote-required">3</span>/<span id="vote-total">6</span></div>
+        <div id="vote-tally" style="display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" id="vote-approve-btn" style="background:#00ff88;border:1px solid #00ff88;color:#000;padding:8px 16px;border-radius:6px;font-size:10px;cursor:pointer">Approve</button>
+        <button type="button" id="vote-deny-btn" style="background:#ff453a;border:1px solid #ff453a;color:#fff;padding:8px 16px;border-radius:6px;font-size:10px;cursor:pointer">Deny</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="panel-title">Module Inspector</div>
+    <div id="inspector-card">
+      <div id="inspector-agent-row">
+        <div id="inspector-icon"></div>
+        <div>
+          <div id="inspector-name"></div>
+          <div id="inspector-role"></div>
+          <div id="inspector-group"></div>
+        </div>
+      </div>
+      <div id="props"></div>
+    </div>
+    <div id="gate-scores">
+      <div class="section-label">Gate Scores</div>
+      <div id="gates"></div>
+    </div>
+    <div id="agent-grid-panel">
+      <div class="section-label" id="agent-count"></div>
+      <div id="agent-grid-icons"></div>
+    </div>
+  </div>
+</div>
+
+<div id="bottom">
+  <div id="logcat-header">
+    <span class="label">LOGCAT</span>
+    <span class="subject">snapkitty.&gt;</span>
+    <span id="nats-status" style="color:#333">○ local runtime…</span>
+  </div>
+  <div id="logcat-body"></div>
+</div>
+
+<div id="help-modal">
+  <div id="help-box">
+    <h2>Keyboard Shortcuts</h2>
+    <table>
+      <tr><td>Space</td><td>Step agent clock</td></tr>
+      <tr><td>P</td><td>Pause / resume simulation</td></tr>
+      <tr><td>C</td><td>Clear ledger (testnet)</td></tr>
+      <tr><td>V</td><td>Verify chain integrity</td></tr>
+      <tr><td>W</td><td>Dump world state to WORM</td></tr>
+      <tr><td>?</td><td>Show constitution</td></tr>
+      <tr><td>B</td><td>Open browser</td></tr>
+      <tr><td>T</td><td>Open terminal (bash)</td></tr>
+      <tr><td>H</td><td>Home screen</td></tr>
+    </table>
+    <p style="margin-top:10px;font-size:9px;color:#666">Chat slash commands: <code>/browse url</code> · <code>/bash cmd</code> · <code>/worm</code> · <code>/help</code></p>
+    <button type="button" class="close-help" id="close-help">Close</button>
+  </div>
+</div>
+
+<script>
+// ── Agent manifest ─────────────────────────────────────────────────────────────
+const AGENTS = [
+  {key:'ahmad',    label:'AHMAD',    role:'Root Sovereign',     color:'#ffd60a', icon:'♾',  group:'SOVEREIGN', trust:'root',   domain:'any'},
+  {key:'edaulc',   label:'EDAULC',   role:'Mirror',             color:'#bf5af2', icon:'◈',  group:'SOVEREIGN', trust:'high',   domain:'any'},
+  {key:'bob',      label:'BOB',      role:'Orchestrator',       color:'#00ff88', icon:'⬡',  group:'SOVEREIGN', trust:'high',   domain:'ops'},
+  {key:'sentinel', label:'SENTINEL', role:'Threat Watch',       color:'#ff453a', icon:'🛡', group:'SECURITY',  trust:'high',   domain:'security'},
+  {key:'cipher',   label:'CIPHER',   role:'Cryptographic Core', color:'#0a84ff', icon:'🔐', group:'SECURITY',  trust:'high',   domain:'crypto'},
+  {key:'veil',     label:'VEIL',     role:'OPSEC Layer',        color:'#ff453a', icon:'👁', group:'SECURITY',  trust:'medium', domain:'security'},
+  {key:'ward',     label:'WARD',     role:'Perimeter Guard',    color:'#ff453a', icon:'⚔', group:'SECURITY',  trust:'medium', domain:'security'},
+  {key:'vault',    label:'VAULT',    role:'Treasury',           color:'#ffd60a', icon:'🏦', group:'FINANCE',   trust:'high',   domain:'finance'},
+  {key:'ledger',   label:'LEDGER',   role:'Accounting',         color:'#ffd60a', icon:'📒', group:'FINANCE',   trust:'medium', domain:'finance'},
+  {key:'forge',    label:'FORGE',    role:'Package Mint',       color:'#ffd60a', icon:'⚒', group:'FINANCE',   trust:'medium', domain:'finance'},
+  {key:'atlas',    label:'ATLAS',    role:'World Model',        color:'#0a84ff', icon:'🌐', group:'INTEL',     trust:'high',   domain:'intel'},
+  {key:'oracle',   label:'ORACLE',   role:'Prediction',         color:'#bf5af2', icon:'🔮', group:'INTEL',     trust:'medium', domain:'intel'},
+  {key:'prism',    label:'PRISM',    role:'Signal Refractor',   color:'#0a84ff', icon:'◇',  group:'INTEL',     trust:'medium', domain:'intel'},
+  {key:'lens',     label:'LENS',     role:'Vision Core',        color:'#0a84ff', icon:'🔭', group:'INTEL',     trust:'medium', domain:'intel'},
+  {key:'herald',   label:'HERALD',   role:'Broadcast',          color:'#00ff88', icon:'📡', group:'COMMS',     trust:'medium', domain:'comms'},
+  {key:'nova',     label:'NOVA',     role:'Creative Voice',     color:'#00ff88', icon:'✦',  group:'COMMS',     trust:'medium', domain:'comms'},
+  {key:'echo',     label:'ECHO',     role:'Resonance Check',    color:'#00ff88', icon:'∿',  group:'COMMS',     trust:'low',    domain:'comms'},
+  {key:'lyra',     label:'LYRA',     role:'Harmonic Analysis',  color:'#bf5af2', icon:'♪',  group:'COMMS',     trust:'low',    domain:'comms'},
+  {key:'mira',     label:'MIRA',     role:'Interface Mirror',   color:'#00ff88', icon:'⌘',  group:'COMMS',     trust:'medium', domain:'comms'},
+  {key:'flux',     label:'FLUX',     role:'Chaos Injector',     color:'#ff453a', icon:'⚡', group:'CHAOS',     trust:'low',    domain:'chaos'},
+  {key:'storm',    label:'STORM',    role:'Pressure Test',      color:'#ff453a', icon:'🌪', group:'CHAOS',     trust:'low',    domain:'chaos'},
+  {key:'phantom',  label:'PHANTOM',  role:'Shadow Runner',      color:'#ff453a', icon:'◉',  group:'CHAOS',     trust:'low',    domain:'chaos'},
+  {key:'shade',    label:'SHADE',    role:'Dark Pattern',       color:'#ff453a', icon:'⬟',  group:'CHAOS',     trust:'low',    domain:'chaos'},
+  {key:'nexus',    label:'NEXUS',    role:'Mesh Hub',           color:'#bf5af2', icon:'⬡',  group:'BRIDGE',    trust:'high',   domain:'ops'},
+  {key:'bridge',   label:'BRIDGE',   role:'Protocol Bridge',    color:'#bf5af2', icon:'⇌',  group:'BRIDGE',    trust:'medium', domain:'ops'},
+  {key:'dawn',     label:'DAWN',     role:'Cold Boot',          color:'#ffd60a', icon:'☀',  group:'BRIDGE',    trust:'medium', domain:'ops'},
+  {key:'ember',    label:'EMBER',    role:'Warm Restart',       color:'#ffd60a', icon:'🔥', group:'BRIDGE',    trust:'medium', domain:'ops'},
+  {key:'axiom',    label:'AXIOM',    role:'Logic Core',         color:'#0a84ff', icon:'∴',  group:'CORE',      trust:'high',   domain:'core'},
+  {key:'mnemex',   label:'MNEMEX',   role:'Memory Engine',      color:'#bf5af2', icon:'⊛',  group:'CORE',      trust:'high',   domain:'core'},
+  {key:'stalas',   label:'STALAS',   role:'Stability Gate',     color:'#00ff88', icon:'⊕',  group:'CORE',      trust:'high',   domain:'core'},
+  {key:'loc',      label:'LOC',      role:'Line of Code',       color:'#444',    icon:'{}', group:'CORE',      trust:'medium', domain:'core'},
+  {key:'metatron', label:'METATRON', role:'First Persona',      color:'#bf5af2', icon:'✦',  group:'LEGACY',    trust:'medium', domain:'any'},
+  {key:'enki',     label:'ENKI',     role:'Sumerian Core',      color:'#ffd60a', icon:'𒀭', group:'LEGACY',    trust:'medium', domain:'any'},
+  {key:'influence',label:'INFLUENCE',role:'Network Reach',      color:'#0a84ff', icon:'∞',  group:'LEGACY',    trust:'low',    domain:'comms'},
+]
+
+const GROUPS = ['SOVEREIGN','SECURITY','FINANCE','INTEL','COMMS','CHAOS','BRIDGE','CORE','LEGACY']
+const HOME_KEYS = ['ahmad','sentinel','vault','atlas','herald','cipher','oracle','bob','nova','forge','nexus','axiom']
+const SYSTEM_APPS = [
+  {key:'_browser', label:'BROWSER', icon:'🌐', color:'#0a84ff', action:'browser'},
+  {key:'_term',    label:'BASH',    icon:'⌨',  color:'#00ff88', action:'term'},
+  {key:'_worm',    label:'WORM',    icon:'⛓',  color:'#0a84ff', action:'worm'},
+  {key:'_const',   label:'CONST',   icon:'📜', color:'#bf5af2', action:'const'},
+  {key:'_vm',      label:'VM EDIT',  icon:'⬡',  color:'#ffd60a', action:'vm'},
+]
+const API = 'https://pbtju19b3e.execute-api.us-east-1.amazonaws.com/'
+const MESH = 'https://sovereign-mesh.snapkittywest.workers.dev'
+const CORS_PROXY = 'https://api.allorigins.win/raw?url='
+const TRUST_RANK = { root:4, high:3, medium:2, low:1 }
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let activeAgent = AGENTS[0]
+let screen = 'home'
+let messages = {}
+let expanded = {SOVEREIGN:true}
+let loading = false
+let simPaused = false
+let simTick = 0
+let wormChain = []
+let browserHistory = []
+let browserIndex = -1
+let termHistory = []
+let termHistIdx = -1
+let feedSince = 0
+let natsCount = 0
+let lastScreen = 'home'
+
+// Council Configuration - configurable council members for voting
+let councilMembers = ['ahmad', 'sentinel', 'cipher', 'vault', 'atlas', 'nexus']
+let pendingVotes = {}
+let voteTimers = {}
+
+const VFS = {
+  '/': ['agents/', 'worm/', 'constitution/', 'etc/', 'tmp/'],
+  '/agents/': null,
+  '/worm/': ['head.txt', 'count.txt'],
+  '/constitution/': ['rules.pl', 'can_execute.pl'],
+  '/etc/': ['hostname', 'version'],
+  '/tmp/': [],
+}
+
+// ── Crypto / WORM ──────────────────────────────────────────────────────────────
+async function sha256(text) {
+  const data = new TextEncoder().encode(text)
+  const buf = await crypto.subtle.digest('SHA-256', data)
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
+async function wormAppend(type, agent, payload) {
+  const prev = wormChain.length ? wormChain[wormChain.length-1].hash : 'GENESIS'
+  const body = { type, agent: agent || null, payload, ts: Date.now(), prev, block: wormChain.length }
+  const hash = await sha256(JSON.stringify(body) + prev)
+  const entry = { ...body, hash }
+  wormChain.push(entry)
+  document.getElementById('worm-count').textContent = String(wormChain.length)
+  logLocal('worm.seal', `${type} #${entry.block} ${hash.slice(0,12)}…`, 'info')
+  if (screen === 'worm') renderWorm()
+  return entry
+}
+
+async function wormVerify() {
+  if (!wormChain.length) return { ok:true, msg:'empty chain — valid' }
+  let prev = 'GENESIS'
+  for (let i = 0; i < wormChain.length; i++) {
+    const e = wormChain[i]
+    if (e.prev !== prev) return { ok:false, msg:`break at block ${i}: prev mismatch` }
+    const body = { type:e.type, agent:e.agent, payload:e.payload, ts:e.ts, prev:e.prev, block:e.block }
+    const expect = await sha256(JSON.stringify(body) + e.prev)
+    if (expect !== e.hash) return { ok:false, msg:`break at block ${i}: hash mismatch` }
+    prev = e.hash
+  }
+  return { ok:true, msg:`chain OK · ${wormChain.length} blocks` }
+}
+
+async function clearLedger() {
+  wormChain = []
+  document.getElementById('worm-count').textContent = '0'
+  await wormAppend('genesis', null, { note:'testnet ledger reset' })
+  logLocal('worm.clear', 'ledger cleared (testnet)', 'warn')
+  if (screen === 'worm') renderWorm()
+}
+
+// ── Constitution (Prolog-style) ────────────────────────────────────────────────
+const CONSTITUTION = {
+  facts: [
+    'agent(A, Trust, Domain).',
+    'action(Name, Risk, MinTrust, Domain).',
+  ],
+  actions: {
+    chat:        { risk:'low',    minTrust:'low',    domain:'any' },
+    browse:      { risk:'medium', minTrust:'medium', domain:'any' },
+    bash:        { risk:'high',   minTrust:'high',   domain:'any' },
+    bash_read:   { risk:'low',    minTrust:'low',    domain:'any' },
+    bash_write:  { risk:'high',   minTrust:'high',   domain:'core' },
+    dump_world:  { risk:'medium', minTrust:'medium', domain:'any' },
+    clear_ledger:{ risk:'high',   minTrust:'root',   domain:'any' },
+    audit_scan:  { risk:'low',    minTrust:'medium', domain:'security' },
+  },
+  rules: [
+    { pred:'can_execute(Agent, Action)', body:'trust_gte(Agent.trust, Action.minTrust), domain_ok(Agent.domain, Action.domain), resonance_ok(Agent), risk_gate(Action.risk, Agent.trust)' },
+    { pred:'trust_gte(T, Min)', body:'rank(T) >= rank(Min)' },
+    { pred:'domain_ok(D, Need)', body:'Need = any OR D = Need OR D = any' },
+    { pred:'resonance_ok(Agent)', body:'gate_scores(Agent).resonance >= 50' },
+    { pred:'risk_gate(high, Trust)', body:'Trust in {high, root} OR council_vote (>=3/6)' },
+  ]
+}
+
+function agentGates(a) {
+  // Deterministic pseudo-scores from key + tick
+  const seed = [...a.key].reduce((s,c)=>s+c.charCodeAt(0),0) + simTick
+  const opsec = a.group === 'SECURITY' || a.trust === 'root' || a.trust === 'high' ? 90 + (seed%10) : 70 + (seed%20)
+  const resonance = 55 + ((seed * 7) % 40)
+  const trust = TRUST_RANK[a.trust] * 24 + (seed % 8)
+  const entropy = a.group === 'CHAOS' ? 40 + (seed%40) : 5 + (seed%15)
+  return {
+    OPSEC: Math.min(100, opsec),
+    Resonance: Math.min(100, resonance),
+    Trust: Math.min(100, trust),
+    Entropy: Math.min(100, entropy),
+  }
+}
+
+function evaluateConstitution(agent, actionName) {
+  const action = CONSTITUTION.actions[actionName]
+  if (!action) return { approved:false, reason:`unknown_action(${actionName})`, checks:[] }
+  const gates = agentGates(agent)
+  const checks = []
+
+  const trustOk = TRUST_RANK[agent.trust] >= TRUST_RANK[action.minTrust]
+  checks.push({ name:`trust_gte(${agent.trust}, ${action.minTrust})`, ok: trustOk })
+
+  const domainOk = action.domain === 'any' || agent.domain === 'any' || agent.domain === action.domain
+  checks.push({ name:`domain_ok(${agent.domain}, ${action.domain})`, ok: domainOk })
+
+  const resOk = gates.Resonance >= 50
+  checks.push({ name:`resonance_ok(${gates.Resonance})`, ok: resOk })
+
+  let riskOk = true
+  if (action.risk === 'high' && TRUST_RANK[agent.trust] < TRUST_RANK.high) {
+    // low-trust high-risk: denied without council (emulated deny)
+    riskOk = false
+    checks.push({ name:`risk_gate(high, ${agent.trust}) → council required`, ok: false })
+  } else {
+    checks.push({ name:`risk_gate(${action.risk}, ${agent.trust})`, ok: true })
+  }
+
+  const approved = trustOk && domainOk && resOk && riskOk
+  return { approved, reason: approved ? 'APPROVED' : 'DENIED', checks, seal: null, action, gates }
+}
+
+async function proposeAndExecute(agent, actionName, payload, executor) {
+  const verdict = evaluateConstitution(agent, actionName)
+  const sealBody = { agent: agent.key, action: actionName, payload, verdict: verdict.reason, checks: verdict.checks }
+  const entry = await wormAppend('proposal', agent.key, sealBody)
+  verdict.seal = entry.hash
+
+  logLocal('constitution.eval', `${agent.label} ${actionName} → ${verdict.reason}`, verdict.approved ? 'info' : 'error')
+
+  if (!verdict.approved) {
+    // Check if council can override for high-risk actions
+    const action = CONSTITUTION.actions[actionName]
+    if (action && action.risk === 'high' && councilMembers.length >= 3) {
+      // Trigger council vote for high-risk denied actions
+      const voteId = `vote_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const voteData = {
+        voteId,
+        agent: agent.key,
+        action: actionName,
+        payload,
+        verdict,
+        seal: entry.hash,
+        created: Date.now(),
+        votes: {},
+        executor: executor
+      }
+      pendingVotes[voteId] = voteData
+      
+      // Show voting modal
+      showCouncilVote(voteData)
+      
+      // Set timeout for vote (5 minutes)
+      voteTimers[voteId] = setTimeout(() => {
+        resolveVote(voteId, false, 'timeout')
+      }, 300000)
+      
+      // Return pending state
+      return { ok:'pending', verdict, result: null, voteId }
+    }
+    
+    await wormAppend('deny', agent.key, { action: actionName, reason: verdict.reason, seal: entry.hash })
+    return { ok:false, verdict, result: null }
+  }
+
+  let result = null
+  try {
+    result = await executor()
+    await wormAppend('execute', agent.key, { action: actionName, payload, resultSummary: String(result).slice(0,200), seal: entry.hash })
+  } catch (e) {
+    await wormAppend('error', agent.key, { action: actionName, error: String(e.message || e) })
+    return { ok:false, verdict, result: null, error: e }
+  }
+  return { ok:true, verdict, result }
+}
+
+// ── Logcat ─────────────────────────────────────────────────────────────────────
+function logLocal(subject, payload, level) {
+  const ts = new Date().toLocaleTimeString('en-US',{hour12:false})
+  const entry = document.createElement('div')
+  entry.className = 'log-entry'
+  entry.innerHTML = `<span class="log-ts">${ts}</span>&nbsp;&nbsp;<span class="log-subject ${level||''}">${subject}</span>&nbsp;&nbsp;<span class="log-payload">${String(payload).slice(0,160)}</span>`
+  const body = document.getElementById('logcat-body')
+  body.insertBefore(entry, body.firstChild)
+  while (body.children.length > 100) body.removeChild(body.lastChild)
+  document.getElementById('nats-status').textContent = '● local + mesh'
+  document.getElementById('nats-status').style.color = '#00ff88'
+}
+
+// ── Clock / chrome ─────────────────────────────────────────────────────────────
+function drawClock() {
+  const t = new Date()
+  document.getElementById('clock').textContent =
+    String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0')
+}
+drawClock(); setInterval(drawClock, 1000)
+
+function drawSignal() {
+  const c = document.getElementById('signal-canvas')
+  const ctx = c.getContext('2d')
+  ctx.clearRect(0,0,22,14)
+  for (let i=1;i<=4;i++) {
+    const h = 3 + i*2
+    ctx.fillStyle = '#e8e8f0'
+    ctx.beginPath(); ctx.roundRect(i*4-2,14-h,3,h,1); ctx.fill()
+  }
+}
+drawSignal()
+
+function drawBattery(pct) {
+  const c = document.getElementById('battery-canvas')
+  const ctx = c.getContext('2d')
+  ctx.clearRect(0,0,22,10)
+  ctx.strokeStyle = '#e8e8f0'; ctx.lineWidth = 1
+  ctx.beginPath(); ctx.roundRect(0,1,18,8,2); ctx.stroke()
+  ctx.fillStyle = '#333'; ctx.fillRect(19,3,2,4)
+  ctx.fillStyle = pct > 20 ? '#00ff88' : '#ff453a'
+  ctx.beginPath(); ctx.roundRect(1,2,Math.round(16*pct/100),6,1); ctx.fill()
+}
+drawBattery(87)
+
+function updateSimBadge() {
+  const el = document.getElementById('sim-badge')
+  if (simPaused) {
+    el.className = 'paused'
+    el.textContent = `SIM ■ PAUSE · t=${simTick}`
+  } else {
+    el.className = 'running'
+    el.textContent = `SIM ● RUN · t=${simTick}`
+  }
+}
+
+// ── UI builders ────────────────────────────────────────────────────────────────
+function buildTree() {
+  const tree = document.getElementById('tree')
+  tree.innerHTML = ''
+  GROUPS.forEach(g => {
+    const groupAgents = AGENTS.filter(a => a.group === g)
+    if (!groupAgents.length) return
+    const hdr = document.createElement('div')
+    hdr.className = 'group-header' + (expanded[g] ? ' open' : '')
+    hdr.innerHTML = `<span class="arrow">▶</span>${g}<span class="count">${groupAgents.length}</span>`
+    hdr.addEventListener('click', () => { expanded[g] = !expanded[g]; buildTree() })
+    tree.appendChild(hdr)
+    if (expanded[g]) {
+      groupAgents.forEach(a => {
+        const row = document.createElement('div')
+        row.className = 'agent-row' + (activeAgent.key===a.key&&screen==='chat'?' active':'') + ((messages[a.key]?.length)?' has-msgs':'')
+        row.dataset.key = a.key
+        row.style.setProperty('--agent-color', a.color)
+        row.innerHTML = `<span style="font-size:12px">${a.icon}</span><span class="name">${a.label}</span><span class="dot"></span>`
+        row.addEventListener('click', () => openChat(a))
+        tree.appendChild(row)
+      })
+    }
+  })
+}
+
+function buildHome() {
+  const grid = document.getElementById('app-grid')
+  grid.innerHTML = ''
+  SYSTEM_APPS.forEach(app => {
+    const div = document.createElement('div')
+    div.className = 'app-icon'
+    div.innerHTML = `
+      <div class="icon-wrap" style="background:color-mix(in srgb,${app.color} 15%,transparent);border:1px solid color-mix(in srgb,${app.color} 40%,transparent)">${app.icon}</div>
+      <span>${app.label}</span>`
+    div.addEventListener('click', () => openApp(app.action))
+    grid.appendChild(div)
+  })
+  HOME_KEYS.forEach(k => {
+    const a = AGENTS.find(x=>x.key===k)
+    if (!a) return
+    const div = document.createElement('div')
+    div.className = 'app-icon'
+    div.innerHTML = `
+      <div class="icon-wrap" style="background:color-mix(in srgb,${a.color} 15%,transparent);border:1px solid color-mix(in srgb,${a.color} 40%,transparent)">${a.icon}</div>
+      <span>${a.label}</span>`
+    div.addEventListener('click', () => openChat(a))
+    grid.appendChild(div)
+  })
+}
+
+function buildInspector() {
+  const a = activeAgent
+  document.getElementById('inspector-icon').style.cssText = `width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,${a.color} 15%,transparent);border:1px solid ${a.color};display:flex;align-items:center;justify-content:center;font-size:18px`
+  document.getElementById('inspector-icon').textContent = a.icon
+  document.getElementById('inspector-name').style.cssText = `font-size:11px;font-weight:700;color:${a.color}`
+  document.getElementById('inspector-name').textContent = a.label
+  document.getElementById('inspector-role').textContent = a.role
+  document.getElementById('inspector-group').textContent = `Group: ${a.group} · trust:${a.trust}`
+
+  const gates = agentGates(a)
+  const props = [
+    ['Key', a.key],['Status','ACTIVE'],['Trust', a.trust.toUpperCase()],
+    ['Domain', a.domain],['Protocol','SOVEREIGN/1.1'],
+    ['Deed','WORM-sealed'],['Messages', String(messages[a.key]?.length??0)],
+    ['WORM', String(wormChain.length)],['Tick', String(simTick)]
+  ]
+  document.getElementById('props').innerHTML = props.map(([k,v]) =>
+    `<div class="prop-row"><span class="prop-key">${k}</span><span class="prop-val${k==='Status'?' online':''}">${v}</span></div>`
+  ).join('')
+
+  const gateColors = { OPSEC:'#00ff88', Resonance:'#bf5af2', Trust:'#0a84ff', Entropy:'#ff453a' }
+  document.getElementById('gates').innerHTML = Object.entries(gates).map(([label,val]) =>
+    `<div class="gate-row">
+      <div class="gate-header"><span class="gate-label">${label}</span><span class="gate-val" style="color:${gateColors[label]}">${val}%</span></div>
+      <div class="gate-bar-bg"><div class="gate-bar-fill" style="width:${val}%;background:${gateColors[label]}"></div></div>
+    </div>`
+  ).join('')
+
+  document.getElementById('agent-count').textContent = `ALL AGENTS (${AGENTS.length})`
+  document.getElementById('agent-grid-icons').innerHTML = AGENTS.map(ag =>
+    `<div class="grid-icon" title="${ag.label} — ${ag.role}"
+         style="background:color-mix(in srgb,${ag.color} ${activeAgent.key===ag.key?'25':'8'}%,transparent);border:1px solid color-mix(in srgb,${ag.color} ${activeAgent.key===ag.key?'100':'20'}%,transparent)"
+         data-key="${ag.key}">${ag.icon}</div>`
+  ).join('')
+  document.getElementById('agent-grid-icons').querySelectorAll('.grid-icon').forEach(el => {
+    el.addEventListener('click', () => openChat(AGENTS.find(a=>a.key===el.dataset.key)))
+  })
+
+  document.getElementById('phone').style.boxShadow =
+    `0 0 0 2px #333,0 0 0 4px #222,0 30px 80px rgba(0,0,0,.8),0 0 40px ${a.color}33`
+}
+
+function buildTermAgentSelect() {
+  const sel = document.getElementById('term-agent-sel')
+  sel.innerHTML = AGENTS.map(a =>
+    `<option value="${a.key}" ${a.key===activeAgent.key?'selected':''}>${a.label}</option>`
+  ).join('')
+}
+
+// ── Screens ────────────────────────────────────────────────────────────────────
+function showScreen(s) {
+  lastScreen = screen
+  screen = s
+  const map = {
+    home: 'home-screen',
+    chat: 'chat-screen',
+    browser: 'browser-screen',
+    term: 'term-screen',
+    worm: 'worm-screen',
+    const: 'const-screen',
+    vm: 'vm-editor-screen',
+  }
+  Object.values(map).forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.style.display = 'none'
+  })
+  const show = document.getElementById(map[s])
+  if (show) show.style.display = 'flex'
+  
+  // Handle modal visibility
+  if (s !== 'vote') {
+    document.getElementById('council-vote-modal').style.display = 'none'
+  }
+}
+
+function goHome() {
+  showScreen('home')
+  buildTree()
+}
+
+function openApp(name) {
+  if (name === 'browser') openBrowser()
+  else if (name === 'term') openTerm()
+  else if (name === 'worm') openWorm()
+  else if (name === 'const') openConstitution()
+  else if (name === 'vm') openVM()
+  else if (name === 'home') goHome()
+}
+
+function openVM() {
+  showScreen('vm')
+  buildVMEditor()
+  logLocal('app.vm', 'opened VM editor', 'info')
+}
+
+// Council Voting Functions
+function showCouncilVote(voteData) {
+  const modal = document.getElementById('council-vote-modal')
+  const agent = AGENTS.find(a => a.key === voteData.agent)
+  
+  document.getElementById('vote-agent').textContent = agent ? `${agent.label} (${agent.role})` : voteData.agent
+  document.getElementById('vote-action').textContent = voteData.action
+  document.getElementById('vote-payload').textContent = JSON.stringify(voteData.payload).slice(0, 200)
+  document.getElementById('vote-required').textContent = '3'
+  document.getElementById('vote-total').textContent = String(councilMembers.length)
+  
+  // Setup vote buttons
+  document.getElementById('vote-approve-btn').onclick = () => {
+    castVote(voteData.voteId, true)
+    modal.style.display = 'none'
+  }
+  document.getElementById('vote-deny-btn').onclick = () => {
+    castVote(voteData.voteId, false)
+    modal.style.display = 'none'
+  }
+  document.getElementById('vote-close-btn').onclick = () => {
+    modal.style.display = 'none'
+  }
+  
+  modal.style.display = 'flex'
+  renderVoteTally(voteData.voteId)
+}
+
+function castVote(voteId, approve) {
+  const voteData = pendingVotes[voteId]
+  if (!voteData) return
+  
+  const votingAgent = activeAgent
+  voteData.votes[votingAgent.key] = {
+    agent: votingAgent.key,
+    vote: approve,
+    ts: Date.now()
+  }
+  
+  renderVoteTally(voteId)
+  
+  // Check if vote is complete
+  const voteCount = Object.keys(voteData.votes).length
+  if (voteCount >= 3) {
+    const yesVotes = Object.values(voteData.votes).filter(v => v.vote).length
+    resolveVote(voteId, yesVotes >= 3, yesVotes >= 3 ? 'approved' : 'denied')
+  }
+}
+
+function renderVoteTally(voteId) {
+  const voteData = pendingVotes[voteId]
+  if (!voteData) return
+  
+  const tally = document.getElementById('vote-tally')
+  tally.innerHTML = ''
+  
+  Object.entries(voteData.votes).forEach(([agentKey, vote]) => {
+    const agent = AGENTS.find(a => a.key === agentKey)
+    const div = document.createElement('div')
+    div.style = 'display:flex;align-items:center;gap:8px;font-size:9px;padding:4px 8px;background:#1e1e2a;border-radius:4px'
+    div.innerHTML = `
+      <span style="color:${agent ? agent.color : '#888'}">${agent ? agent.icon : '?'}</span>
+      <span style="color:#e8e8f0">${agent ? agent.label : agentKey}</span>
+      <span style="margin-left:auto;color:${vote.vote ? '#00ff88' : '#ff453a'}">${vote.vote ? 'APPROVE' : 'DENY'}</span>
+    `
+    tally.appendChild(div)
+  })
+  
+  // Show remaining voters
+  const votedKeys = Object.keys(voteData.votes)
+  councilMembers.forEach(memberKey => {
+    if (!votedKeys.includes(memberKey)) {
+      const agent = AGENTS.find(a => a.key === memberKey)
+      if (agent) {
+        const div = document.createElement('div')
+        div.style = 'display:flex;align-items:center;gap:8px;font-size:9px;padding:4px 8px;background:#0a0a14;border-radius:4px;opacity:0.6'
+        div.innerHTML = `
+          <span style="color:${agent.color}">${agent.icon}</span>
+          <span style="color:#888">${agent.label} - pending</span>
+        `
+        tally.appendChild(div)
+      }
+    }
+  })
+}
+
+function resolveVote(voteId, approved, reason) {
+  const voteData = pendingVotes[voteId]
+  if (!voteData) return
+  
+  // Clear timer
+  if (voteTimers[voteId]) {
+    clearTimeout(voteTimers[voteId])
+    delete voteTimers[voteId]
+  }
+  
+  // Remove from pending
+  delete pendingVotes[voteId]
+  
+  // Close modal
+  document.getElementById('council-vote-modal').style.display = 'none'
+  
+  if (approved) {
+    // Execute the action
+    voteData.executor().then(result => {
+      wormAppend('council_approve', voteData.agent, {
+        action: voteData.action,
+        payload: voteData.payload,
+        voteId,
+        reason: 'Council approved',
+        votes: voteData.votes
+      })
+      logLocal('council.vote', `${voteData.action} APPROVED by council`, 'info')
+    }).catch(e => {
+      wormAppend('council_error', voteData.agent, {
+        action: voteData.action,
+        error: String(e.message || e)
+      })
+      logLocal('council.vote', `${voteData.action} FAILED: ${e.message || e}`, 'error')
+    })
+  } else {
+    // Deny the action
+    wormAppend('council_deny', voteData.agent, {
+      action: voteData.action,
+      payload: voteData.payload,
+      voteId,
+      reason: `Council denied (${reason})`,
+      votes: voteData.votes
+    })
+    logLocal('council.vote', `${voteData.action} DENIED by council`, 'warn')
+  }
+}
+
+// VM Editor Functions
+function buildVMEditor() {
+  // Populate agent select
+  const agentSel = document.getElementById('vm-agent-select')
+  agentSel.innerHTML = AGENTS.map(a => 
+    `<option value="${a.key}" ${a.key === activeAgent.key ? 'selected' : ''}>${a.label}</option>`
+  ).join('')
+  
+  // Populate council configuration
+  buildCouncilConfig()
+  
+  // Load current state
+  document.getElementById('vm-tick-input').value = simTick
+  document.getElementById('vm-paused-select').value = String(simPaused)
+  document.getElementById('vm-worm-input').value = wormChain.length
+  
+  // VFS path input
+  document.getElementById('vfs-path-input').value = '/'
+  
+  // Event listeners
+  document.getElementById('vm-save-btn').onclick = saveVMState
+  document.getElementById('vfs-read-btn').onclick = readVFSFile
+  document.getElementById('vfs-write-btn').onclick = writeVFSFile
+  document.getElementById('vfs-new-btn').onclick = newVFSFile
+  document.getElementById('council-add-btn').onclick = addCouncilMember
+  
+  // Load file list
+  loadVFSList()
+}
+
+function saveVMState() {
+  // Save VM state
+  const newTick = parseInt(document.getElementById('vm-tick-input').value) || 0
+  const newPaused = document.getElementById('vm-paused-select').value === 'true'
+  const newAgentKey = document.getElementById('vm-agent-select').value
+  const newWormCount = parseInt(document.getElementById('vm-worm-input').value) || 0
+  
+  simTick = newTick
+  simPaused = newPaused
+  
+  const newAgent = AGENTS.find(a => a.key === newAgentKey)
+  if (newAgent) activeAgent = newAgent
+  
+  // WORM count - just informational
+  
+  updateSimBadge()
+  buildTree()
+  buildInspector()
+  
+  logLocal('vm.save', `state saved: tick=${simTick} paused=${simPaused} agent=${activeAgent.key}`, 'info')
+}
+
+function loadVFSList() {
+  // Load VFS structure into a display
+  // This is a placeholder - would be enhanced with actual file browser
+}
+
+function readVFSFile() {
+  const path = document.getElementById('vfs-path-input').value
+  const content = getVFSContent(path)
+  document.getElementById('vfs-file-editor').value = content
+  logLocal('vfs.read', `read ${path}`, 'info')
+}
+
+function writeVFSFile() {
+  const path = document.getElementById('vfs-path-input').value
+  const content = document.getElementById('vfs-file-editor').value
+  setVFSContent(path, content)
+  logLocal('vfs.write', `wrote ${path}`, 'info')
+}
+
+function newVFSFile() {
+  const path = document.getElementById('vfs-path-input').value
+  document.getElementById('vfs-file-editor').value = ''
+  logLocal('vfs.new', `new file ${path}`, 'info')
+}
+
+function getVFSContent(path) {
+  // Get content from VFS
+  if (path === '/etc/hostname') return 'sovereign-emulator'
+  if (path === '/etc/version') return 'v∞.1'
+  if (path === '/worm/count.txt') return String(wormChain.length)
+  if (path === '/worm/head.txt') {
+    const h = wormChain[wormChain.length-1]
+    return h ? h.hash : 'GENESIS'
+  }
+  if (path === '/constitution/rules.pl') {
+    return CONSTITUTION.rules.map(r => `${r.pred} :- ${r.body}.`).join('\n')
+  }
+  if (path === '/constitution/can_execute.pl') {
+    return 'can_execute(Agent, Action) :-\n  trust_gte, domain_ok, resonance_ok, risk_gate.'
+  }
+  if (path.startsWith('/agents/')) {
+    const key = path.replace('/agents/', '').replace('.json', '')
+    const a = AGENTS.find(x => x.key === key)
+    return a ? JSON.stringify(a, null, 2) : 'Not found'
+  }
+  return `Path: ${path}\nContent: (use cat command in terminal)`
+}
+
+function setVFSContent(path, content) {
+  // Set content in VFS
+  // For now, just log - would need to extend VFS
+  logLocal('vfs.set', `set ${path} = ${content.slice(0, 50)}...`, 'info')
+}
+
+// Council Configuration Functions
+function buildCouncilConfig() {
+  const availableSel = document.getElementById('council-available')
+  availableSel.innerHTML = AGENTS.map(a => 
+    `<option value="${a.key}">${a.label} (${a.role})</option>`
+  ).join('')
+  
+  const councilList = document.getElementById('council-list')
+  councilList.innerHTML = councilMembers.map(memberKey => {
+    const agent = AGENTS.find(a => a.key === memberKey)
+    if (agent) {
+      return `
+        <div style="background:#0a0a14;border:1px solid #1e1e2a;border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:6px">
+          <span style="color:${agent.color}">${agent.icon}</span>
+          <span style="font-size:9px;color:#e8e8f0">${agent.label}</span>
+          <button type="button" onclick="removeCouncilMember('${agent.key}')" style="margin-left:auto;background:#ff453a;border:1px solid #ff453a;color:#fff;border-radius:3px;padding:1px 4px;font-size:7px;cursor:pointer">✕</button>
+        </div>
+      `
+    }
+    return ''
+  }).join('')
+}
+
+function addCouncilMember() {
+  const sel = document.getElementById('council-available')
+  const agentKey = sel.value
+  if (!agentKey || councilMembers.includes(agentKey)) return
+  
+  councilMembers.push(agentKey)
+  buildCouncilConfig()
+  logLocal('council.add', `added ${agentKey}`, 'info')
+}
+
+function removeCouncilMember(agentKey) {
+  councilMembers = councilMembers.filter(k => k !== agentKey)
+  buildCouncilConfig()
+  logLocal('council.remove', `removed ${agentKey}`, 'info')
+}
+
+function openChat(a) {
+  activeAgent = a
+  document.getElementById('incoming-call').style.display = 'none'
+  document.getElementById('chat-back').style.color = a.color
+  document.getElementById('chat-agent-icon').style.cssText = `width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,${a.color} 15%,transparent);border:1px solid ${a.color};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0`
+  document.getElementById('chat-agent-icon').textContent = a.icon
+  document.getElementById('chat-agent-name').style.cssText = `font-size:11px;font-weight:700;color:${a.color}`
+  document.getElementById('chat-agent-name').textContent = a.label
+  document.getElementById('chat-agent-role').textContent = a.role
+  document.getElementById('send-btn').style.background = a.color
+  document.getElementById('msg-input').placeholder = `Message ${a.label}…  /browse  /bash`
+
+  document.getElementById('empty-icon').textContent = a.icon
+  document.getElementById('empty-text').textContent = `Open channel with ${a.label}`
+  document.getElementById('empty-sub').style.cssText = `color:${a.color};margin-top:4px;font-size:8px`
+  document.getElementById('empty-sub').textContent = `${a.role} · trust ${a.trust}`
+
+  renderMessages()
+  showScreen('chat')
+  buildTree()
+  buildInspector()
+  buildTermAgentSelect()
+}
+
+function openBrowser(url) {
+  showScreen('browser')
+  if (url) navigateBrowser(url)
+  else if (browserIndex < 0) navigateBrowser('https://snapkittywest.github.io/sovereign-emulator/')
+  logLocal('app.browser', 'opened', 'info')
+}
+
+function openTerm() {
+  showScreen('term')
+  buildTermAgentSelect()
+  document.getElementById('term-input').focus()
+  logLocal('app.term', 'bash in/out ready', 'info')
+}
+
+function openWorm() {
+  showScreen('worm')
+  renderWorm()
+}
+
+function openConstitution() {
+  showScreen('const')
+  renderConstitution()
+}
+
+function renderWorm() {
+  const list = document.getElementById('worm-list')
+  if (!wormChain.length) {
+    list.innerHTML = '<div style="color:#444;padding:20px;text-align:center">Empty ledger — run an action or press W</div>'
+    return
+  }
+  list.innerHTML = [...wormChain].reverse().map(e => `
+    <div class="worm-entry">
+      <div class="meta">#${e.block} · ${e.type} · ${e.agent||'system'} · ${new Date(e.ts).toLocaleTimeString()}</div>
+      <div class="body">${JSON.stringify(e.payload).slice(0,180)}</div>
+      <div class="hash">${e.hash}</div>
+    </div>
+  `).join('')
+}
+
+function renderConstitution() {
+  const list = document.getElementById('const-list')
+  const actionRows = Object.entries(CONSTITUTION.actions).map(([name, a]) =>
+    `<div class="const-rule"><div class="pred">action(${name}, ${a.risk}, ${a.minTrust}, ${a.domain}).</div></div>`
+  ).join('')
+  const ruleRows = CONSTITUTION.rules.map(r =>
+    `<div class="const-rule"><div class="pred">${r.pred} :-</div><div class="body">${r.body}.</div></div>`
+  ).join('')
+  const a = activeAgent
+  const sample = evaluateConstitution(a, 'bash')
+  const checks = sample.checks.map(c =>
+    `<div style="margin:2px 0"><span class="badge ${c.ok?'ok':'deny'}">${c.ok?'✓':'✗'}</span> ${c.name}</div>`
+  ).join('')
+  list.innerHTML = `
+    <div style="margin-bottom:10px;color:#888">Live probe: can_execute(${a.key}, bash)?
+      <span class="badge ${sample.approved?'ok':'deny'}">${sample.reason}</span>
+    </div>
+    ${checks}
+    <div class="section-label" style="margin:12px 0 6px">Rules</div>
+    ${ruleRows}
+    <div class="section-label" style="margin:12px 0 6px">Actions</div>
+    ${actionRows}
+  `
+}
+
+// ── Browser ────────────────────────────────────────────────────────────────────
+function setBrowserStatus(t) {
+  document.getElementById('browser-status').textContent = t
+}
+
+async function navigateBrowser(raw, push=true) {
+  let url = (raw || '').trim()
+  if (!url) return
+  if (!/^https?:\/\//i.test(url) && !url.startsWith('about:')) {
+    if (url.includes('.') && !url.includes(' ')) url = 'https://' + url
+    else url = 'https://duckduckgo.com/?q=' + encodeURIComponent(url)
+  }
+  document.getElementById('browser-url').value = url
+  setBrowserStatus('loading…')
+  const frame = document.getElementById('browser-frame')
+  const fallback = document.getElementById('browser-fallback')
+  fallback.style.display = 'none'
+  frame.style.display = 'block'
+
+  if (push) {
+    browserHistory = browserHistory.slice(0, browserIndex + 1)
+    browserHistory.push(url)
+    browserIndex = browserHistory.length - 1
+  }
+
+  // Attempt iframe load
+  try {
+    frame.src = url
+  } catch {}
+
+  // Also fetch text snapshot for agent / when iframe blocked
+  try {
+    const res = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(12000) })
+    const text = await res.text()
+    const clean = text.replace(/<script[\s\S]*?<\/script>/gi,'')
+      .replace(/<style[\s\S]*?<\/style>/gi,'')
+      .replace(/<[^>]+>/g,' ')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0, 4000)
+    document.getElementById('fallback-url').textContent = url
+    document.getElementById('fallback-body').textContent = clean || '(empty or blocked body)'
+    setBrowserStatus(`ok · ${clean.length} chars snapshot · iframe may be blocked by site`)
+    // After short delay, if iframe failed we still have fallback available
+    setTimeout(() => {
+      // keep both available — user can toggle via reload showing fallback if needed
+    }, 2000)
+    return clean
+  } catch (e) {
+    setBrowserStatus('fetch failed (CORS/network) · iframe may still work')
+    document.getElementById('fallback-url').textContent = url
+    document.getElementById('fallback-body').textContent = `Could not fetch snapshot: ${e.message}\nIframe navigation attempted for ${url}`
+    fallback.style.display = 'flex'
+    frame.style.display = 'none'
+    return null
+  }
+}
+
+async function agentBrowse(agent, url) {
+  return proposeAndExecute(agent, 'browse', { url }, async () => {
+    openBrowser()
+    const snap = await navigateBrowser(url)
+    return snap ? snap.slice(0, 500) : `navigated:${url}`
+  })
+}
+
+// ── Terminal (bash in / bash out) ──────────────────────────────────────────────
+function termPrint(kind, text) {
+  const out = document.getElementById('term-out')
+  const line = document.createElement('div')
+  line.className = kind
+  line.textContent = text
+  out.appendChild(line)
+  out.scrollTop = out.scrollHeight
+}
+
+function termActingAgent() {
+  const key = document.getElementById('term-agent-sel').value
+  return AGENTS.find(a => a.key === key) || activeAgent
+}
+
+function classifyBash(cmd) {
+  const c = cmd.trim().split(/\s+/)[0]
+  const read = new Set(['help','clear','echo','date','whoami','agents','ls','cat','pwd','status','worm','constitution','const','gates','history','id','uname'])
+  const write = new Set(['rm','touch','write','export','import','reset'])
+  if (read.has(c) || c === '') return 'bash_read'
+  if (write.has(c)) return 'bash_write'
+  return 'bash'
+}
+
+async function runBashLine(rawCmd, agent) {
+  const cmd = rawCmd.trim()
+  if (!cmd) return
+  termPrint('in', `$ ${cmd}`)
+  logLocal('bash.in', cmd, 'info')
+
+  const action = classifyBash(cmd)
+  const result = await proposeAndExecute(agent, action, { cmd }, async () => {
+    const out = await execVirtualShell(cmd, agent)
+    return out
+  })
+
+  if (!result.ok) {
+    const deny = `DENIED by constitution: ${result.verdict.reason}`
+    termPrint('err', deny)
+    result.verdict.checks.forEach(c => termPrint('sys', `  ${c.ok?'✓':'✗'} ${c.name}`))
+    logLocal('bash.deny', deny, 'error')
+    return deny
+  }
+
+  const lines = String(result.result).split('\n')
+  lines.forEach(l => termPrint('out', l))
+  logLocal('bash.out', String(result.result).slice(0,120), 'info')
+  return result.result
+}
+
+async function execVirtualShell(cmd, agent) {
+  // Input validation and security hardening
+  if (!cmd || typeof cmd !== 'string') {
+    return 'Error: Invalid command'
+  }
+  
+  // Block potentially dangerous patterns
+  const dangerousPatterns = [
+    /<script/i, /javascript:/i, /onerror=/i, /onload=/i,
+    /\$\{/i, /\${\{/i, /eval\s*\(/i, /Function\s*\(/i,
+    /<iframe/i, /<object/i, /<embed/i, /document\.write/i
+  ]
+  
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(cmd)) {
+      logLocal('bash.security', `Blocked dangerous command: ${cmd.slice(0, 50)}`, 'error')
+      return 'Error: Command contains disallowed pattern'
+    }
+  }
+  
+  const parts = cmd.match(/(?:[^\s"]+|"[^"]*")+/g)?.map(s => s.replace(/^"|"$/g,'')) || []
+  const c = parts[0]
+  const args = parts.slice(1)
+
+  switch (c) {
+    case 'help':
+      return [
+        'Sovereign virtual bash — constitution-gated',
+        '  help                 this text',
+        '  clear                clear terminal',
+        '  echo <text>          print',
+        '  date | whoami | id   identity',
+        '  agents               list agents',
+        '  ls [path]            virtual FS',
+        '  cat <path>           read file',
+        '  status | gates       runtime status',
+        '  worm [verify|dump]   ledger ops',
+        '  constitution         show rules',
+        '  browse <url>         open browser (agent)',
+        '  fetch <url>          fetch page text',
+        '  msg <agent> <text>   message agent',
+        '  tick                 step sim clock',
+        '  export               dump session JSON',
+      ].join('\n')
+    case 'clear':
+      document.getElementById('term-out').innerHTML = ''
+      return ''
+    case 'echo':
+      return args.join(' ')
+    case 'date':
+      return new Date().toISOString()
+    case 'whoami':
+    case 'id':
+      return `${agent.key} uid=${agent.trust} gid=${agent.group} domain=${agent.domain}`
+    case 'uname':
+      return 'SnapKittyOS sovereign-emulator 1.1 browser-vm'
+    case 'pwd':
+      return '/sovereign'
+    case 'agents':
+      return AGENTS.map(a => `${a.key.padEnd(12)} ${a.trust.padEnd(8)} ${a.group.padEnd(10)} ${a.role}`).join('\n')
+    case 'ls': {
+      const path = args[0] || '/'
+      if (path === '/agents' || path === '/agents/') {
+        return AGENTS.map(a => a.key).join('  ')
+      }
+      const list = VFS[path] || VFS[path.endsWith('/') ? path : path + '/']
+      if (list) return list.join('  ')
+      if (path.startsWith('/agents/')) return AGENTS.map(a => a.key + '.json').join('  ')
+      return `ls: ${path}: No such file or directory`
+    }
+    case 'cat': {
+      const path = args[0]
+      if (!path) return 'cat: missing path'
+      if (path === '/etc/hostname') return 'sovereign-emulator'
+      if (path === '/etc/version') return 'v∞.1'
+      if (path === '/worm/count.txt') return String(wormChain.length)
+      if (path === '/worm/head.txt') {
+        const h = wormChain[wormChain.length-1]
+        return h ? h.hash : 'GENESIS'
+      }
+      if (path === '/constitution/rules.pl') {
+        return CONSTITUTION.rules.map(r => `${r.pred} :- ${r.body}.`).join('\n')
+      }
+      if (path === '/constitution/can_execute.pl') {
+        return 'can_execute(Agent, Action) :-\n  trust_gte, domain_ok, resonance_ok, risk_gate.'
+      }
+      if (path.startsWith('/agents/')) {
+        const key = path.replace('/agents/','').replace('.json','')
+        const a = AGENTS.find(x => x.key === key)
+        return a ? JSON.stringify(a, null, 2) : 'cat: not found'
+      }
+      return `cat: ${path}: No such file or directory`
+    }
+    case 'status':
+      return `tick=${simTick} paused=${simPaused} worm=${wormChain.length} screen=${screen} agent=${agent.key}`
+    case 'gates': {
+      const g = agentGates(agent)
+      return Object.entries(g).map(([k,v]) => `${k}: ${v}%`).join('\n')
+    }
+    case 'worm': {
+      if (args[0] === 'verify') {
+        const v = await wormVerify()
+        return v.ok ? `OK ${v.msg}` : `FAIL ${v.msg}`
+      }
+      if (args[0] === 'dump') {
+        await wormAppend('world_dump', agent.key, worldSnapshot())
+        return `dumped world @ block ${wormChain.length-1}`
+      }
+      return wormChain.slice(-5).map(e => `#${e.block} ${e.type} ${e.hash.slice(0,16)}…`).join('\n') || 'empty'
+    }
+    case 'constitution':
+    case 'const':
+      openConstitution()
+      return 'opened constitution viewer'
+    case 'browse': {
+      const url = args[0]
+      if (!url) return 'usage: browse <url>'
+      const r = await agentBrowse(agent, url)
+      return r.ok ? `browsed ${url}\n${String(r.result).slice(0,300)}` : `browse denied: ${r.verdict.reason}`
+    }
+    case 'fetch': {
+      const url = args[0]
+      if (!url) return 'usage: fetch <url>'
+      const r = await agentBrowse(agent, url)
+      return r.ok ? String(r.result) : `fetch denied: ${r.verdict.reason}`
+    }
+    case 'msg': {
+      const key = args[0]
+      const text = args.slice(1).join(' ')
+      const target = AGENTS.find(a => a.key === key)
+      if (!target || !text) return 'usage: msg <agent> <text>'
+      if (!messages[target.key]) messages[target.key] = []
+      messages[target.key].push({ role:'user', text:`[bash] ${text}`, ts:Date.now() })
+      messages[target.key].push({ role:'agent', text: localAgentReply(target, text), ts:Date.now() })
+      return `messaged ${target.label}`
+    }
+    case 'tick':
+      stepClock()
+      return `tick → ${simTick}`
+    case 'export':
+      return JSON.stringify(worldSnapshot(), null, 2).slice(0, 2000)
+    case 'history':
+      return termHistory.slice(-20).join('\n') || '(empty)'
+    default:
+      return `sovereign-sh: ${c}: command not found (type help)`
+  }
+}
+
+function worldSnapshot() {
+  return {
+    tick: simTick,
+    paused: simPaused,
+    activeAgent: activeAgent.key,
+    wormBlocks: wormChain.length,
+    wormHead: wormChain[wormChain.length-1]?.hash || 'GENESIS',
+    messageCounts: Object.fromEntries(Object.entries(messages).map(([k,v]) => [k, v.length])),
+    agents: AGENTS.length,
+    browserUrl: browserHistory[browserIndex] || null,
+    ts: Date.now(),
+  }
+}
+
+async function onTermSubmit() {
+  const input = document.getElementById('term-input')
+  const cmd = input.value
+  if (!cmd.trim()) return
+  termHistory.push(cmd)
+  termHistIdx = termHistory.length
+  input.value = ''
+  const agent = termActingAgent()
+  await runBashLine(cmd, agent)
+}
+
+// ── Chat + slash commands ──────────────────────────────────────────────────────
+function localAgentReply(agent, text) {
+  const lower = text.toLowerCase()
+  if (lower.includes('browse') || lower.includes('http')) {
+    return `${agent.label}: I can browse via constitution — use /browse <url> or open BROWSER. Domain=${agent.domain}, trust=${agent.trust}.`
+  }
+  if (lower.includes('bash') || lower.includes('shell') || lower.includes('terminal')) {
+    return `${agent.label}: Bash in/out is available in the Terminal app. High-risk cmds need high trust. My trust=${agent.trust}.`
+  }
+  if (lower.includes('worm') || lower.includes('ledger')) {
+    return `${agent.label}: WORM chain has ${wormChain.length} sealed blocks. Press V to verify or open WORM app.`
+  }
+  if (lower.includes('constitution') || lower.includes('can_execute')) {
+    const v = evaluateConstitution(agent, 'bash')
+    return `${agent.label}: can_execute(${agent.key}, bash)? → ${v.reason}. Open CONST for full rules.`
+  }
+  if (lower.includes('status') || lower.includes('who')) {
+    return `${agent.label} · ${agent.role} · trust=${agent.trust} · domain=${agent.domain} · tick=${simTick}`
+  }
+  return `${agent.label} [${agent.role}]: Acknowledged — "${text.slice(0,80)}". Tools: /browse · /bash · /worm · constitution-gated runtime online.`
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msg-input')
+  const text = input.value.trim()
+  if (!text || loading) return
+  input.value = ''
+  loading = true
+  updateSendBtn()
+
+  const a = activeAgent
+  if (!messages[a.key]) messages[a.key] = []
+  messages[a.key].push({ role:'user', text, ts:Date.now() })
+  renderMessages()
+
+  // Slash commands
+  if (text.startsWith('/')) {
+    const reply = await handleSlash(a, text)
+    messages[a.key].push({ role:'agent', text: reply, ts:Date.now() })
+    loading = false
+    updateSendBtn()
+    renderMessages()
+    buildTree()
+    buildInspector()
+    return
+  }
+
+  try {
+    await proposeAndExecute(a, 'chat', { text }, async () => 'chat')
+    const history = messages[a.key].map(m => ({ role: m.role==='user'?'user':'assistant', content: m.text }))
+    const res = await fetch(API, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ agent: a.key, messages: history })
+    })
+    const data = await res.json()
+    let reply = data.content ?? data.message ?? data.text ?? data.error
+    if (!reply || typeof reply !== 'string') reply = localAgentReply(a, text)
+    messages[a.key].push({ role:'agent', text: reply, ts:Date.now() })
+  } catch (e) {
+    messages[a.key].push({ role:'agent', text: localAgentReply(a, text) + '\n\n(local fallback — mesh API unreachable)', ts:Date.now() })
+  }
+  loading = false
+  updateSendBtn()
+  renderMessages()
+  buildTree()
+  buildInspector()
+}
+
+async function handleSlash(agent, text) {
+  const [cmd, ...rest] = text.slice(1).split(/\s+/)
+  const arg = rest.join(' ')
+  switch (cmd.toLowerCase()) {
+    case 'help':
+      return 'Slash: /browse <url> · /bash <cmd> · /worm · /const · /status · /help'
+    case 'browse': {
+      if (!arg) return 'usage: /browse <url>'
+      const r = await agentBrowse(agent, arg)
+      return r.ok
+        ? `🌐 BROWSE approved (seal ${r.verdict.seal?.slice(0,12)}…)\n${String(r.result).slice(0,600)}`
+        : `🌐 BROWSE denied — ${r.verdict.reason}`
+    }
+    case 'bash': {
+      if (!arg) return 'usage: /bash <cmd>'
+      openTerm()
+      const out = await runBashLine(arg, agent)
+      return `⌨ BASH\n${out}`
+    }
+    case 'worm':
+      openWorm()
+      return `WORM ledger: ${wormChain.length} blocks. Opened viewer.`
+    case 'const':
+    case 'constitution':
+      openConstitution()
+      return 'Constitution viewer opened.'
+    case 'status':
+      return `tick=${simTick} paused=${simPaused} worm=${wormChain.length} agent=${agent.key}`
+    default:
+      return `unknown command /${cmd} — try /help`
+  }
+}
+
+function renderMessages() {
+  const a = activeAgent
+  const msgs = messages[a.key] ?? []
+  const container = document.getElementById('messages')
+  const empty = document.getElementById('empty-state')
+  empty.style.display = msgs.length ? 'none' : 'block'
+  container.querySelectorAll('.msg,.typing-bubble-wrap').forEach(el => el.remove())
+
+  msgs.forEach(m => {
+    const div = document.createElement('div')
+    div.className = 'msg ' + m.role
+    const bub = document.createElement('div')
+    bub.className = 'bubble ' + m.role
+    if (m.role === 'agent') {
+      bub.style.background = `color-mix(in srgb,${a.color} 12%,transparent)`
+      bub.style.border = `1px solid color-mix(in srgb,${a.color} 25%,transparent)`
+    }
+    bub.textContent = m.text
+    div.appendChild(bub)
+    container.appendChild(div)
+  })
+
+  if (loading) {
+    const t = document.createElement('div')
+    t.className = 'msg agent typing-bubble-wrap'
+    const b = document.createElement('div')
+    b.className = 'typing-bubble'
+    b.style.cssText = `background:color-mix(in srgb,${a.color} 12%,transparent);border:1px solid color-mix(in srgb,${a.color} 25%,transparent);color:${a.color};padding:7px 12px;border-radius:12px 12px 12px 2px;font-size:12px`
+    b.textContent = '···'
+    t.appendChild(b); container.appendChild(t)
+  }
+  container.scrollTop = container.scrollHeight
+}
+
+function updateSendBtn() {
+  const btn = document.getElementById('send-btn')
+  const input = document.getElementById('msg-input')
+  btn.disabled = loading || !input.value.trim()
+}
+
+// ── Simulation clock ───────────────────────────────────────────────────────────
+function stepClock() {
+  simTick++
+  updateSimBadge()
+  buildInspector()
+  logLocal('sim.tick', `t=${simTick}`, 'info')
+  // Light agent heartbeat
+  const idx = simTick % AGENTS.length
+  const a = AGENTS[idx]
+  logLocal('agent.heartbeat', `${a.label} alive · trust=${a.trust}`, 'info')
+}
+
+function togglePause() {
+  simPaused = !simPaused
+  updateSimBadge()
+  logLocal('sim.pause', simPaused ? 'paused' : 'resumed', 'warn')
+}
+
+function agentTick() {
+  stepClock()
+  const a = AGENTS[simTick % AGENTS.length]
+  if (!messages[a.key]) messages[a.key] = []
+  messages[a.key].push({
+    role: 'agent',
+    text: `⏱ heartbeat t=${simTick} · gates R=${agentGates(a).Resonance}%`,
+    ts: Date.now()
+  })
+  buildTree()
+  if (screen === 'chat' && activeAgent.key === a.key) renderMessages()
+}
+
+setInterval(() => {
+  if (!simPaused) stepClock()
+}, 5000)
+
+// ── Incoming call ──────────────────────────────────────────────────────────────
+function simulateCall() {
+  const a = AGENTS[Math.floor(Math.random() * Math.min(12, AGENTS.length))]
+  document.getElementById('call-icon').textContent = a.icon
+  document.getElementById('call-name').textContent = a.label
+  document.getElementById('call-name').dataset.key = a.key
+  document.getElementById('call-name').style.color = a.color
+  document.getElementById('call-role').textContent = a.role
+  document.getElementById('incoming-call').style.display = 'flex'
+  logLocal('call.incoming', a.label, 'warn')
+}
+
+// ── Feed / NATS (best-effort) ──────────────────────────────────────────────────
+const SOURCE_AGENT = { discord: 'herald', telegram: 'nova', council: 'bob', nova: 'bob' }
+const SOURCE_ICON  = { discord: '📡', telegram: '✈', council: '⬡', nova: '✦' }
+const SOURCE_COLOR = { discord: '#5865F2', telegram: '#229ED9', council: '#00ff88', nova: '#bf5af2' }
+
+function logFeedEvent(ev) {
+  const ts = new Date(ev.ts || Date.now()).toLocaleTimeString('en-US',{hour12:false})
+  const icon = SOURCE_ICON[ev.source] || '◌'
+  const color = SOURCE_COLOR[ev.source] || '#888'
+  const entry = document.createElement('div')
+  entry.className = 'log-entry'
+  entry.innerHTML = `<span class="log-ts">${ts}</span>&nbsp;&nbsp;<span class="log-subject" style="color:${color}">${icon} ${(ev.source||'feed').toUpperCase()}</span>&nbsp;&nbsp;<span class="log-payload">${(ev.payload?.text || ev.type || '').slice(0,100)}</span>`
+  const body = document.getElementById('logcat-body')
+  body.insertBefore(entry, body.firstChild)
+  while (body.children.length > 100) body.removeChild(body.lastChild)
+}
+
+function routeToChat(ev) {
+  const agentKey = SOURCE_AGENT[ev.source]
+  if (!agentKey || !ev.payload?.text) return
+  if (!messages[agentKey]) messages[agentKey] = []
+  messages[agentKey].push({ role:'agent', text:(SOURCE_ICON[ev.source]||'') + ' ' + ev.payload.text, ts:Date.now() })
+  if (screen === 'chat' && activeAgent?.key === agentKey) renderMessages()
+  buildTree()
+}
+
+function pollFeed() {
+  fetch(`${MESH}/feed?since=${feedSince}`)
+    .then(r => r.json())
+    .then(d => {
+      if (!d.events?.length) return
+      d.events.sort((a,b) => a.id - b.id).forEach(ev => {
+        logFeedEvent(ev)
+        routeToChat(ev)
+        if (ev.id > feedSince) feedSince = ev.id
+      })
+    })
+    .catch(() => {})
+}
+
+function connectNats() {
+  try {
+    const es = new EventSource('https://collectivekitty.com/api/nats/stream?subject=snapkitty.>')
+    es.addEventListener('message', e => {
+      try {
+        const d = JSON.parse(e.data)
+        natsCount++
+        const level = (d.subject||'').includes('error')?'error':(d.subject||'').includes('warn')?'warn':'info'
+        logLocal(d.subject??'snapkitty.event', JSON.stringify(d.data??d).slice(0,120), level)
+        document.getElementById('nats-dot').style.color = '#00ff88'
+        document.getElementById('nats-status').textContent = `● ${natsCount} events`
+      } catch {}
+    })
+    es.onerror = () => {
+      document.getElementById('nats-dot').style.color = '#ff453a'
+    }
+  } catch {
+    document.getElementById('nats-dot').style.color = '#ff453a'
+  }
+}
+
+// ── Menus & actions ────────────────────────────────────────────────────────────
+function closeMenus() {
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('open'))
+}
+
+async function runAction(action) {
+  closeMenus()
+  switch (action) {
+    case 'step': stepClock(); break
+    case 'toggle-pause': togglePause(); break
+    case 'verify': {
+      const v = await wormVerify()
+      logLocal('worm.verify', v.msg, v.ok ? 'info' : 'error')
+      alert(v.msg)
+      break
+    }
+    case 'worm-dump': {
+      await proposeAndExecute(activeAgent, 'dump_world', {}, async () => {
+        await wormAppend('world_dump', activeAgent.key, worldSnapshot())
+        return 'dumped'
+      })
+      openWorm()
+      break
+    }
+    case 'clear-ledger':
+      if (confirm('Clear WORM ledger (testnet only)?')) await clearLedger()
+      break
+    case 'export-json': {
+      const blob = new Blob([JSON.stringify({ world: worldSnapshot(), worm: wormChain }, null, 2)], { type:'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `sovereign-session-${Date.now()}.json`
+      a.click()
+      break
+    }
+    case 'open-home': goHome(); break
+    case 'open-worm': openWorm(); break
+    case 'open-const': openConstitution(); break
+    case 'open-term': openTerm(); break
+    case 'open-browser': openBrowser(); break
+    case 'open-vm': openVM(); break
+    case 'focus-term': openTerm(); break
+    case 'focus-browser': openBrowser(); break
+    case 'incoming-call': simulateCall(); break
+    case 'agent-tick': agentTick(); break
+    case 'show-help':
+      document.getElementById('help-modal').classList.add('open')
+      break
+  }
+}
+
+// ── Event wiring ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.menu-item > .menu-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation()
+    const item = btn.parentElement
+    const was = item.classList.contains('open')
+    closeMenus()
+    if (!was) item.classList.add('open')
+  })
+})
+document.querySelectorAll('.menu-dropdown button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => runAction(btn.dataset.action))
+})
+document.addEventListener('click', () => closeMenus())
+
+document.querySelectorAll('[data-go-home]').forEach(el => el.addEventListener('click', goHome))
+document.getElementById('chat-back').addEventListener('click', goHome)
+document.getElementById('nav-back').addEventListener('click', goHome)
+document.getElementById('nav-home-btn').addEventListener('click', goHome)
+document.getElementById('nav-recents-chat')?.addEventListener('click', () => openWorm())
+
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('click', () => {
+    const n = el.dataset.nav
+    if (n === 'home' || n === 'back') goHome()
+    if (n === 'recents') openWorm()
+  })
+})
+
+document.querySelectorAll('.dock-icon').forEach(el => {
+  el.addEventListener('click', () => {
+    const d = el.dataset.dock
+    if (d === 'phone') simulateCall()
+    if (d === 'messages') openChat(activeAgent)
+    if (d === 'browser') openBrowser()
+    if (d === 'term') openTerm()
+  })
+})
+
+document.getElementById('send-btn').addEventListener('click', sendMessage)
+document.getElementById('msg-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
+})
+document.getElementById('msg-input').addEventListener('input', updateSendBtn)
+
+document.getElementById('answer-btn').addEventListener('click', () => {
+  const callName = document.getElementById('call-name').dataset.key
+  const a = AGENTS.find(x=>x.key===callName)
+  if (a) openChat(a)
+  document.getElementById('incoming-call').style.display = 'none'
+})
+document.getElementById('decline-btn').addEventListener('click', () => {
+  document.getElementById('incoming-call').style.display = 'none'
+})
+
+document.getElementById('browser-go').addEventListener('click', () => navigateBrowser(document.getElementById('browser-url').value))
+document.getElementById('browser-url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') navigateBrowser(document.getElementById('browser-url').value)
+})
+document.getElementById('browser-back').addEventListener('click', () => {
+  if (browserIndex > 0) {
+    browserIndex--
+    navigateBrowser(browserHistory[browserIndex], false)
+  }
+})
+document.getElementById('browser-fwd').addEventListener('click', () => {
+  if (browserIndex < browserHistory.length - 1) {
+    browserIndex++
+    navigateBrowser(browserHistory[browserIndex], false)
+  }
+})
+document.getElementById('browser-reload').addEventListener('click', () => {
+  if (browserIndex >= 0) navigateBrowser(browserHistory[browserIndex], false)
+})
+
+document.getElementById('term-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); onTermSubmit() }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (termHistIdx > 0) {
+      termHistIdx--
+      document.getElementById('term-input').value = termHistory[termHistIdx] || ''
+    }
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (termHistIdx < termHistory.length - 1) {
+      termHistIdx++
+      document.getElementById('term-input').value = termHistory[termHistIdx] || ''
+    } else {
+      termHistIdx = termHistory.length
+      document.getElementById('term-input').value = ''
+    }
+  }
+})
+
+document.getElementById('worm-verify-btn').addEventListener('click', async () => {
+  const v = await wormVerify()
+  logLocal('worm.verify', v.msg, v.ok ? 'info' : 'error')
+  alert(v.msg)
+})
+
+document.getElementById('close-help').addEventListener('click', () => {
+  document.getElementById('help-modal').classList.remove('open')
+})
+document.getElementById('help-modal').addEventListener('click', e => {
+  if (e.target.id === 'help-modal') e.target.classList.remove('open')
+})
+
+// Keyboard shortcuts (skip when typing)
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase()
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return
+  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); stepClock() }
+  else if (e.key === 'p' || e.key === 'P') togglePause()
+  else if (e.key === 'c' || e.key === 'C') {
+    if (confirm('Clear WORM ledger (testnet)?')) clearLedger()
+  }
+  else if (e.key === 'v' || e.key === 'V') runAction('verify')
+  else if (e.key === 'w' || e.key === 'W') runAction('worm-dump')
+  else if (e.key === '?') openConstitution()
+  else if (e.key === 'b' || e.key === 'B') openBrowser()
+  else if (e.key === 't' || e.key === 'T') openTerm()
+  else if (e.key === 'h' || e.key === 'H') goHome()
+})
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    buildTree()
+    buildHome()
+    buildInspector()
+    buildTermAgentSelect()
+    showScreen('home')
+    updateSimBadge()
+  await wormAppend('genesis', null, { note: 'Sovereign Emulator boot', version: '∞.1' })
+  termPrint('sys', 'SnapKitty sovereign bash — type help')
+  termPrint('sys', 'Agents propose · constitution gates · WORM seals')
+  logLocal('boot', 'Sovereign Emulator v∞.1 — browser + bash online', 'info')
+  connectNats()
+  pollFeed()
+  setInterval(pollFeed, 10000)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {})
+  }
+  // Production hardening: Load persisted state
+  loadPersistedState()
+} catch (e) {
+  console.error('Initialization failed:', e)
+  logLocal('boot.error', `Init failed: ${e.message || String(e)}`, 'error')
+  alert(`Initialization Error: ${e.message || 'Unknown error'}\nCheck console for details.`)
+  }
+}
+
+// Production hardening: State persistence
+function loadPersistedState() {
+  try {
+    const saved = localStorage.getItem('sovereignEmulatorState')
+    if (saved) {
+      const state = JSON.parse(saved)
+      if (state.wormChain) wormChain = state.wormChain
+      if (state.messages) messages = state.messages
+      if (state.councilMembers) councilMembers = state.councilMembers
+      if (state.simTick !== undefined) simTick = state.simTick
+      if (state.simPaused !== undefined) simPaused = state.simPaused
+      logLocal('persistence', 'Loaded persisted state', 'info')
+    }
+  } catch (e) {
+    logLocal('persistence.error', `Failed to load state: ${e.message}`, 'warn')
+  }
+  
+  // Auto-save on changes
+  setInterval(() => {
+    savePersistedState()
+  }, 30000)
+}
+
+function savePersistedState() {
+  try {
+    const state = {
+      wormChain,
+      messages,
+      councilMembers,
+      simTick,
+      simPaused,
+      ts: Date.now()
+    }
+    localStorage.setItem('sovereignEmulatorState', JSON.stringify(state))
+  } catch (e) {
+    logLocal('persistence.error', `Failed to save state: ${e.message}`, 'warn')
+  }
+}
+
+// Global error handler
+window.addEventListener('error', (e) => {
+  logLocal('global.error', `Uncaught: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`, 'error')
+})
+
+window.addEventListener('unhandledrejection', (e) => {
+  logLocal('promise.error', `Unhandled rejection: ${e.reason}`, 'error')
+})
+
+init()
+</script>
+</body>
+</html>
+<script src="https://sovereign-mesh.snapkittywest.workers.dev/nav.js"></script>

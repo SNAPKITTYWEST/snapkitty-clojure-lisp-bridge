@@ -1,0 +1,99 @@
+{
+  "_doc": "LISP handshake — the shared stone. AHMAD-BOT and EDUALC cannot speak directly. They meet here. Both write deterministic S-expressions. BOB reads both and seals this file as proof they reasoned together.",
+  "_protocol": "repo-mediated-sexp-handshake-v1",
+
+  "interfaces": {
+    "ahmad-bot": {
+      "writes":    "worm/ahmad-bot-crawl.sexp",
+      "reads":     "worm/edualc-crawl.sexp",
+      "publishes": "arena.crawl.red",
+      "schema":    "constitution/arena.sexp",
+      "deed":      "deeds/ahmad-bot.deed"
+    },
+    "edualc": {
+      "writes":    "worm/edualc-crawl.sexp",
+      "reads":     "worm/ahmad-bot-crawl.sexp",
+      "publishes": "arena.crawl.blue",
+      "schema":    "constitution/arena.sexp",
+      "deed":      "deeds/edualc.deed"
+    },
+    "bob": {
+      "reads":     ["worm/ahmad-bot-crawl.sexp", "worm/edualc-crawl.sexp"],
+      "writes":    ["worm/bob-handshake.sexp", "worm/scoreboard.json"],
+      "seal_rule": "BOB is the only agent that may seal. Submitters propose. BOB approves.",
+      "deed":      "deeds/bob.deed"
+    }
+  },
+
+  "handshake_steps": [
+    {
+      "step": 1,
+      "actor": "AHMAD-BOT",
+      "action": "crawl SNAPKITTYWEST org via GitHub API",
+      "output": "worm/ahmad-bot-crawl.sexp",
+      "format": "s-expression per constitution/arena.sexp",
+      "hat":    "red"
+    },
+    {
+      "step": 2,
+      "actor": "EDUALC",
+      "action": "crawl SNAPKITTYWEST org — reads AHMAD-BOT output to cross-check",
+      "input":  "worm/ahmad-bot-crawl.sexp",
+      "output": "worm/edualc-crawl.sexp",
+      "format": "s-expression per constitution/arena.sexp",
+      "hat":    "blue"
+    },
+    {
+      "step": 3,
+      "actor": "BOB",
+      "action": "read both sexp files, reason via Prolog gravity.pl, emit bob-handshake.sexp",
+      "inputs": ["worm/ahmad-bot-crawl.sexp", "worm/edualc-crawl.sexp"],
+      "output": "worm/bob-handshake.sexp",
+      "format": "s-expression — BOB's verdict"
+    },
+    {
+      "step": 4,
+      "actor": "BOB",
+      "action": "WORM seal — SHA-256 chain append to scoreboard.json",
+      "seals":  ["worm/bob-handshake.sexp", "worm/scoreboard.json"],
+      "note":   "Once sealed, no agent may alter. Append-only."
+    }
+  ],
+
+  "sexp_contract": {
+    "required_fields": ["agent", "hat", "ts", "repos"],
+    "gravity_formula": "(lines * dep_fan_out * recursion_depth) / total_lines",
+    "thresholds": {
+      "alive":  ">= 0.6",
+      "broken": ">= 0.3 and < 0.6",
+      "orphan": "< 0.3"
+    },
+    "gap_types": [
+      "missing_wire",
+      "dead_page",
+      "local_only",
+      "github_only",
+      "no_tests",
+      "no_readme"
+    ]
+  },
+
+  "verification": {
+    "method":      "SHA-256 of sexp file contents",
+    "chain":       "worm/scoreboard.json — append-only WORM chain",
+    "sealed_by":   "BOB only",
+    "any_agent_can_verify": true,
+    "note":        "If ahmad-bot-crawl.sexp hash != chain entry, crawl was tampered."
+  },
+
+  "why_repo_mediated": "Neither agent shares a runtime. Both can only trust what is written to the repo and sealed. The S-expression file IS the handshake. The WORM chain IS the proof. No direct communication needed — deterministic files are the protocol.",
+
+  "grisp_convention": {
+    "note": "grisp-shadow-fleet was created 2026-06-18 — may be Codex's parallel build of this same pattern. Cross-check: if grisp-shadow-fleet has a .sexp or scoreboard.json, it is using the same protocol and should be merged or federated.",
+    "action": "run: gh repo view SNAPKITTYWEST/grisp-shadow-fleet --json defaultBranchRef"
+  },
+
+  "sealed": false,
+  "seal_hash": null,
+  "sealed_at": null
+}

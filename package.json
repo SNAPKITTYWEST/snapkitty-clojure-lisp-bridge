@@ -23,7 +23,14 @@
     "watch:all": "npx shadow-cljs watch server dashboard browser",
     "test": "npx shadow-cljs compile test && node out/tests.js",
     "compile:clojure": "node ./bin/clojure-to-bytecode.mjs",
-    "compile:verbose": "node ./bin/clojure-to-bytecode.mjs --verbose"
+    "compile:verbose": "node ./bin/clojure-to-bytecode.mjs --verbose",
+    "compile:gov": "node ./bin/clojure-to-bytecode.mjs --governance",
+    "compile:sealed": "node ./bin/clojure-to-bytecode.mjs --sealed",
+    "pipeline": "node ./backend/relational-engine/pipeline.mjs",
+    "pipeline:verbose": "node ./backend/relational-engine/pipeline.mjs --verbose",
+    "serve:bob": "node ./backend/bob/bob.mjs",
+    "serve:gitlab": "node ./backend/gitlab/webhook-receiver.mjs",
+    "serve:snap-os": "node ./backend/snap-os-bridge/jit-gateway.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.0",

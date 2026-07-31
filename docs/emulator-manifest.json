@@ -1,0 +1,20 @@
+{
+  "name": "SnapKitty Sovereign Emulator",
+  "short_name": "SnapKitty",
+  "description": "Sovereign Agent Emulator — SOVEREIGN IDE v∞.0",
+  "start_url": "/sovereign-emulator/",
+  "scope": "/sovereign-emulator/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04040a",
+  "theme_color": "#7c3aed",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "https://sovereign-mesh.snapkittywest.workers.dev/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

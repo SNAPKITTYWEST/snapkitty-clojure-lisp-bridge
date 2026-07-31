@@ -1,0 +1,26 @@
+(agent-deed
+  (id         "BOB")
+  (hat        none)
+  (role       oracle)
+  (mandate    "Receive reports from AHMAD-BOT and EDUALC. Reason. Seal to WORM chain.")
+  (authority
+    (may      read)
+    (may      reason)
+    (may      seal)
+    (may      update-scoreboard)
+    (may-not  crawl)
+    (may-not  delete))
+  (inputs
+    (channel  nats "arena.crawl.red")
+    (channel  nats "arena.crawl.blue"))
+  (output
+    (worm-chain "../worm/scoreboard.json")
+    (github-discussion true)
+    (channel    nats "arena.result"))
+  (reasoning
+    (kernel     prolog)
+    (rules      "../constitution/gravity.pl")
+    (gate       lean4)
+    (display    terminal-center)
+    (color      purple)
+    (visible    true)))

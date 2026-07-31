@@ -1,0 +1,26 @@
+(agent-deed
+  (id         "AHMAD-BOT")
+  (hat        red)
+  (role       scavenger)
+  (mandate    "Find what is broken, dead, or disconnected. Report to BOB.")
+  (authority
+    (may      read)
+    (may      crawl)
+    (may      flag)
+    (may-not  seal)
+    (may-not  write)
+    (may-not  delete))
+  (targets
+    (github-org "SNAPKITTYWEST")
+    (scope      all-repos)
+    (schedule   "0 2 * * *"))
+  (output
+    (format     s-expression)
+    (schema     "../constitution/arena.sexp")
+    (channel    nats "arena.crawl.red")
+    (alert      discord)
+    (alert      telegram))
+  (reasoning
+    (display    terminal-left)
+    (color      red)
+    (visible    true)))
