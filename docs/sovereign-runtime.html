@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sovereign Lisp Machine — Production Runtime</title>
+  <style>
+:root {
+--bg-void: #020508;
+--bg-deep: #050b12;
+--bg-panel: rgba(8, 18, 28, 0.82);
+--bg-panel-strong: rgba(9, 24, 36, 0.96);
+--bg-elevated: rgba(12, 32, 46, 0.9);
+
+--line-soft: rgba(112, 220, 255, 0.12);
+--line-medium: rgba(112, 220, 255, 0.28);
+--line-bright: rgba(112, 220, 255, 0.72);
+
+--text-primary: #e8fbff;
+--text-secondary: #8eb5c1;
+--text-muted: #52707a;
+
+--cyan: #56e8ff;
+--cyan-hot: #a9f7ff;
+--teal: #38ffc7;
+--violet: #ab7cff;
+--gold: #ffc857;
+--red: #ff5470;
+--green: #5dff9d;
+
+--shadow-cyan:
+0 0 18px rgba(86, 232, 255, 0.2),
+0 0 52px rgba(86, 232, 255, 0.08);
+
+--shadow-violet:
+0 0 20px rgba(171, 124, 255, 0.2),
+0 0 60px rgba(171, 124, 255, 0.08);
+
+--radius-xs: 6px;
+--radius-sm: 10px;
+--radius-md: 16px;
+--radius-lg: 24px;
+
+--font-display: "Orbitron", "Rajdhani", "Segoe UI", sans-serif;
+--font-mono: "JetBrains Mono", "IBM Plex Mono", "Cascadia Code", monospace;
+--ease-system: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg-void);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(86, 232, 255, 0.15), transparent 42%),
+    radial-gradient(circle at 88% 25%, rgba(171, 124, 255, 0.12), transparent 35%),
+    linear-gradient(180deg, #020508 0%, #041019 48%, #020609 100%);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  content: "";
+  pointer-events: none;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(86, 232, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(86, 232, 255, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  content: "";
+  pointer-events: none;
+  opacity: 0.035;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, #ffffff 3px);
+}
+
+::selection {
+  color: #001014;
+  background: var(--cyan);
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+.sovereign-shell {
+  width: min(1800px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.command-deck {
+  position: sticky;
+  top: 12px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.25fr) minmax(320px, 2fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 76px;
+  padding: 14px 18px;
+  border: 1px solid var(--line-medium);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(9, 24, 36, 0.94), rgba(4, 12, 19, 0.91));
+  box-shadow: var(--shadow-cyan), inset 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(22px) saturate(135%);
+}
+
+.brand-lockup {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.brand-sigil {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid var(--line-bright);
+  border-radius: 50%;
+  color: var(--cyan-hot);
+  font-size: 22px;
+  box-shadow: inset 0 0 18px rgba(86, 232, 255, 0.15), 0 0 24px rgba(86, 232, 255, 0.16);
+  animation: sigil-pulse 3.8s ease-in-out infinite;
+}
+
+.brand-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.brand-subtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.runtime-strip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.runtime-chip {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: rgba(2, 10, 16, 0.55);
+  white-space: nowrap;
+  transition: border-color 180ms var(--ease-system), color 180ms var(--ease-system);
+}
+
+.runtime-chip[data-state="ready"] {
+  color: var(--green);
+  border-color: rgba(93, 255, 157, 0.35);
+}
+
+.runtime-chip[data-state="loading"] {
+  color: var(--gold);
+  border-color: rgba(255, 200, 87, 0.35);
+}
+
+.runtime-chip[data-state="error"] {
+  color: var(--red);
+  border-color: rgba(255, 84, 112, 0.45);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.global-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sovereign-button {
+  position: relative;
+  min-height: 38px;
+  padding: 0 15px;
+  overflow: hidden;
+  border: 1px solid var(--line-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: linear-gradient(180deg, rgba(18, 47, 65, 0.9), rgba(6, 19, 28, 0.95));
+  cursor: pointer;
+  transition: transform 160ms var(--ease-system), border-color 160ms var(--ease-system), box-shadow 160ms var(--ease-system);
+}
+
+.sovereign-button::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.12) 48%, transparent 75%);
+  transform: translateX(-130%);
+  transition: transform 500ms var(--ease-system);
+}
+
+.sovereign-button:hover {
+  border-color: var(--line-bright);
+  box-shadow: var(--shadow-cyan);
+  transform: translateY(-1px);
+}
+
+.sovereign-button:hover::before {
+  transform: translateX(130%);
+}
+
+.sovereign-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.sovereign-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sovereign-button[data-variant="primary"] {
+  color: #001115;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--cyan-hot), var(--cyan));
+  font-weight: 800;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(350px, 0.75fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.primary-column, .secondary-column {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.system-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: linear-gradient(160deg, rgba(10, 26, 38, 0.9), rgba(3, 11, 17, 0.96));
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.26), inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.system-panel::before {
+  position: absolute;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.45;
+}
+
+.panel-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
+}
+
+.panel-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  color: var(--cyan-hot);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panel-body {
+  padding: 14px;
+}
+
+.editor-frame {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid rgba(86, 232, 255, 0.1);
+  border-radius: var(--radius-sm);
+  background: #03080d;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(10, 24, 34, 0.88);
+}
+
+.editor-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.editor-tab {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.editor-tab[aria-selected="true"] {
+  color: var(--cyan-hot);
+  background: rgba(86, 232, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(86, 232, 255, 0.14);
+}
+
+.editor-surface {
+  width: 100%;
+  min-height: 478px;
+  resize: vertical;
+  padding: 18px;
+  border: 0;
+  outline: 0;
+  color: #dffaff;
+  background: linear-gradient(90deg, rgba(86, 232, 255, 0.025), transparent 20%), #03080d;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.output-console {
+  min-height: 220px;
+  max-height: 420px;
+  overflow: auto;
+  padding: 15px;
+  border: 1px solid rgba(86, 232, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: #bcebf3;
+  background: radial-gradient(circle at 20% 0%, rgba(86, 232, 255, 0.06), transparent 35%), #020609;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-card {
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, rgba(15, 37, 51, 0.72), rgba(3, 10, 15, 0.82));
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  margin-top: 9px;
+  color: var(--cyan-hot);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.vm-state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vm-state {
+  min-height: 160px;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(2, 7, 11, 0.78);
+  font-size: 0.74rem;
+  max-height: 300px;
+}
+
+.vm-state h4 {
+  margin: 0 0 10px;
+  color: var(--violet);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.trace-row {
+  display: grid;
+  grid-template-columns: 70px 90px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 34px;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.knowledge-node {
+  position: relative;
+  padding: 12px 14px 12px 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(4, 13, 20, 0.78);
+  margin-bottom: 8px;
+}
+
+.knowledge-node::before {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 8px;
+  width: 2px;
+  content: "";
+  border-radius: 2px;
+  background: linear-gradient(var(--cyan), var(--violet));
+}
+
+.proof-record {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.proof-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.proof-status[data-status="verified"] {
+  color: var(--green);
+  background: rgba(93, 255, 157, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(93, 255, 157, 0.2);
+}
+
+.proof-status[data-status="conditional"] {
+  color: var(--gold);
+  background: rgba(255, 200, 87, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 200, 87, 0.2);
+}
+
+.proof-status[data-status="incomplete"] {
+  color: var(--red);
+  background: rgba(255, 84, 112, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 84, 112, 0.2);
+}
+
+.worm-entry {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.7rem;
+}
+
+.worm-index {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(86, 232, 255, 0.2);
+  border-radius: 50%;
+  color: var(--cyan);
+  font-size: 0.62rem;
+}
+
+.worm-hash {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes sigil-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 18px rgba(86, 232, 255, 0.15), 0 0 24px rgba(86, 232, 255, 0.16);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: inset 0 0 22px rgba(86, 232, 255, 0.22), 0 0 40px rgba(86, 232, 255, 0.25);
+  }
+}
+
+@media (max-width: 1180px) {
+  .command-deck {
+    grid-template-columns: 1fr auto;
+  }
+  .runtime-strip {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .sovereign-shell {
+    padding: 9px;
+  }
+  .command-deck {
+    position: relative;
+    grid-template-columns: 1fr;
+  }
+  .vm-state-grid {
+    grid-template-columns: 1fr;
+  }
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="sovereign-shell">
+    <!-- COMMAND DECK -->
+    <div class="command-deck">
+      <div class="brand-lockup">
+        <div class="brand-sigil">🧠</div>
+        <div>
+          <h1 class="brand-title">Sovereign</h1>
+          <p class="brand-subtitle">Lisp Runtime</p>
+        </div>
+      </div>
+
+      <div class="runtime-strip">
+        <div class="runtime-chip" data-state="loading" id="wasm-chip">
+          <div class="status-dot"></div>
+          <span>WASM</span>
+        </div>
+        <div class="runtime-chip" data-state="ready" id="lisp-chip">
+          <div class="status-dot"></div>
+          <span>LISP</span>
+        </div>
+        <div class="runtime-chip" data-state="ready" id="vm-chip">
+          <div class="status-dot"></div>
+          <span>SoulVM</span>
+        </div>
+      </div>
+
+      <div class="global-actions">
+        <button class="sovereign-button" onclick="evalInput()" title="Execute input">▶ Eval</button>
+        <button class="sovereign-button" onclick="resetAll()" title="Reset runtime">↻ Reset</button>
+      </div>
+    </div>
+
+    <!-- WORKSPACE GRID -->
+    <div class="workspace-grid">
+      <!-- PRIMARY COLUMN -->
+      <div class="primary-column">
+        <!-- EDITOR PANEL -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">⌨️ Source Editor</h2>
+          </div>
+          <div class="editor-frame">
+            <div class="editor-toolbar">
+              <div class="editor-tabs">
+                <button class="editor-tab" aria-selected="true">LISP</button>
+                <button class="editor-tab">EmojiScript</button>
+              </div>
+            </div>
+            <textarea id="editor" class="editor-surface" placeholder="Enter LISP code or EmojiScript...&#10;&#10;Examples:&#10;(+ 1 2)&#10;🔢6 🔢7 ✖️ ↩️"></textarea>
+          </div>
+        </div>
+
+        <!-- OUTPUT PANEL -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">📤 Output</h2>
+          </div>
+          <div class="panel-body">
+            <div id="output" class="output-console">Ready. Enter code to begin...</div>
+
+            <div class="metric-grid" style="margin-top: 16px;">
+              <div class="metric-card">
+                <div class="metric-label">Expressions</div>
+                <div class="metric-value" id="expr-count">0</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Execution Time</div>
+                <div class="metric-value" id="exec-time">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Result Type</div>
+                <div class="metric-value" id="result-type">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Runtime</div>
+                <div class="metric-value" id="runtime-mode">LISP</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECONDARY COLUMN -->
+      <div class="secondary-column">
+        <!-- VM STATE -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">⚙️ VM State</h2>
+          </div>
+          <div class="panel-body">
+            <div class="vm-state-grid">
+              <div class="vm-state">
+                <h4>Instruction</h4>
+                <div id="vm-ip" style="color: var(--cyan); font-weight: bold;">0</div>
+                <div id="vm-opcode" style="color: var(--text-secondary); font-size: 0.7rem;">—</div>
+              </div>
+              <div class="vm-state">
+                <h4>Stack</h4>
+                <div id="vm-stack" style="color: var(--teal);">—</div>
+              </div>
+              <div class="vm-state">
+                <h4>Memory</h4>
+                <div id="vm-memory" style="color: var(--violet);">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KNOWLEDGE PANEL -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">🧠 Knowledge</h2>
+          </div>
+          <div class="panel-body">
+            <input type="text" id="kb-query" placeholder="Query..." style="width: 100%; padding: 8px; border: 1px solid var(--line-soft); background: #03080d; color: var(--cyan); border-radius: var(--radius-xs); font-size: 0.8rem; margin-bottom: 8px;">
+            <div id="kb-results" style="font-size: 0.75rem; color: var(--text-secondary);">Ready for queries</div>
+          </div>
+        </div>
+
+        <!-- PROOF VAULT -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">📜 Proofs</h2>
+          </div>
+          <div class="panel-body" style="max-height: 280px; overflow-y: auto;">
+            <div id="proofs" style="font-size: 0.75rem;">
+              <div class="proof-record">
+                <span>M02: Machine.lean</span>
+                <span class="proof-status" data-status="verified">Verified</span>
+              </div>
+              <div class="proof-record">
+                <span>M03: Mutation.lean</span>
+                <span class="proof-status" data-status="verified">Verified</span>
+              </div>
+              <div class="proof-record">
+                <span>Equivalence.lean</span>
+                <span class="proof-status" data-status="verified">Verified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WORM LEDGER -->
+        <div class="system-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">⛓️ WORM Ledger</h2>
+          </div>
+          <div class="panel-body" style="max-height: 200px; overflow-y: auto; font-size: 0.7rem;">
+            <div id="worm" style="color: var(--text-secondary);">Initialized. Awaiting operations...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import SovereignRuntime from './js/sovereign-runtime.mjs';
+
+    // ========================================================================
+    // Global State
+    // ========================================================================
+
+    let expressionCount = 0;
+    let wormLedger = [];
+
+    // ========================================================================
+    // Runtime Initialization
+    // ========================================================================
+
+    async function initializeRuntime() {
+      console.log('[Sovereign] Initializing runtime...');
+
+      // Initialize WASM
+      const wasmReady = await SovereignRuntime.initialize();
+      if (wasmReady) {
+        updateChipState('wasm-chip', 'ready');
+        console.log('[Sovereign] WASM ready');
+      } else {
+        updateChipState('wasm-chip', 'error');
+        logOutput('⚠ WASM module failed to load', 'error');
+      }
+
+      logOutput('✓ Sovereign Runtime initialized', 'success');
+    }
+
+    function updateChipState(chipId, state) {
+      const chip = document.getElementById(chipId);
+      if (chip) {
+        chip.setAttribute('data-state', state);
+      }
+    }
+
+    function logOutput(msg, type = 'info') {
+      const output = document.getElementById('output');
+      const line = document.createElement('div');
+      line.textContent = msg;
+      line.style.marginBottom = '4px';
+
+      if (type === 'error') {
+        line.style.color = '#ff5470';
+      } else if (type === 'success') {
+        line.style.color = '#5dff9d';
+      } else if (type === 'info') {
+        line.style.color = '#8eb5c1';
+      }
+
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    // ========================================================================
+    // User Actions
+    // ========================================================================
+
+    window.evalInput = async function() {
+      const editor = document.getElementById('editor');
+      const input = editor.value.trim();
+
+      if (!input) {
+        logOutput('No input', 'error');
+        return;
+      }
+
+      const startTime = performance.now();
+      logOutput(`> ${input.substring(0, 60)}${input.length > 60 ? '...' : ''}`, 'info');
+
+      try {
+        let result;
+        let runtimeMode = 'LISP';
+
+        // Determine input type
+        if (input.includes('🔢') || input.includes('➕')) {
+          // EmojiScript
+          result = SovereignRuntime.executeEmojiScript(input);
+          runtimeMode = 'SoulVM';
+        } else {
+          // LISP
+          const parsed = SovereignRuntime.parseLisp(input);
+          if (parsed.error) {
+            logOutput(`Parse error: ${parsed.message}`, 'error');
+            return;
+          }
+
+          result = SovereignRuntime.evaluateLisp(parsed.ast);
+        }
+
+        const execTime = (performance.now() - startTime).toFixed(2);
+
+        if (result.error) {
+          logOutput(`Error (${result.phase}): ${result.message}`, 'error');
+        } else {
+          logOutput(`${result.result}`, 'success');
+
+          // Update metrics
+          expressionCount++;
+          document.getElementById('expr-count').textContent = expressionCount;
+          document.getElementById('exec-time').textContent = execTime + 'ms';
+          document.getElementById('runtime-mode').textContent = runtimeMode;
+
+          const resultType = typeof result.result;
+          document.getElementById('result-type').textContent = resultType;
+
+          // Update VM state if available
+          if (result.stack) {
+            document.getElementById('vm-stack').textContent = `[${result.stack.join(', ')}]`;
+          }
+
+          // Add to WORM ledger
+          addWormEntry({
+            type: 'execute',
+            input: input.substring(0, 40),
+            result: String(result.result).substring(0, 20),
+            mode: runtimeMode,
+          });
+        }
+      } catch (err) {
+        logOutput(`Runtime error: ${err.message}`, 'error');
+      }
+    };
+
+    window.resetAll = function() {
+      document.getElementById('editor').value = '';
+      document.getElementById('output').innerHTML = '<div style="color: var(--text-secondary);">Reset. Ready for input...</div>';
+      document.getElementById('expr-count').textContent = '0';
+      document.getElementById('exec-time').textContent = '—';
+      document.getElementById('result-type').textContent = '—';
+      document.getElementById('vm-ip').textContent = '0';
+      document.getElementById('vm-opcode').textContent = '—';
+      document.getElementById('vm-stack').textContent = '—';
+
+      expressionCount = 0;
+      logOutput('✓ Runtime reset', 'success');
+    };
+
+    function addWormEntry(entry) {
+      wormLedger.push({
+        index: wormLedger.length,
+        timestamp: Date.now(),
+        ...entry,
+      });
+
+      const wormDiv = document.getElementById('worm');
+      const entryEl = document.createElement('div');
+      entryEl.className = 'worm-entry';
+      entryEl.innerHTML = `
+        <div class="worm-index">${wormLedger.length}</div>
+        <div>
+          <div>${entry.type}</div>
+          <div class="worm-hash">${entry.input} → ${entry.result}</div>
+        </div>
+        <div style="color: var(--cyan); font-weight: bold;">${entry.mode}</div>
+      `;
+      wormDiv.appendChild(entryEl);
+
+      // Keep last 20 entries visible
+      const entries = wormDiv.querySelectorAll('.worm-entry');
+      if (entries.length > 20) {
+        entries[0].remove();
+      }
+    }
+
+    // ========================================================================
+    // Initialization
+    // ========================================================================
+
+    document.addEventListener('DOMContentLoaded', initializeRuntime);
+  </script>
+</body>
+</html>

@@ -13,7 +13,7 @@ ed25519-zebra = "4.0"
 console_error_panic_hook = { version = "0.1", optional = true }
 
 [dev-dependencies]
-wasm-bindgen-test = "1"
+wasm-bindgen-test = "0.3"
 
 [features]
 default = ["console_error_panic_hook"]

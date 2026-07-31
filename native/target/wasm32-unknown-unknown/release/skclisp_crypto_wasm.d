@@ -1,0 +1,1 @@
+C:\Users\jessi\SNAPKITTYWEST\.newrepos\snapkitty-clojure-lisp-bridge\native\target\wasm32-unknown-unknown\release\skclisp_crypto_wasm.wasm: C:\Users\jessi\SNAPKITTYWEST\.newrepos\snapkitty-clojure-lisp-bridge\native\src\lib.rs

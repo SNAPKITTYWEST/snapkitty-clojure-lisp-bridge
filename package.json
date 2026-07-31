@@ -9,14 +9,18 @@
   },
   "scripts": {
     "build:native": "bash native/build.sh",
+    "build:wasm": "cd native && wasm-pack build --target web --out-dir ../docs/wasm --release",
     "prebuild": "npm run build:native",
     "build": "npx shadow-cljs release server",
+    "build:browser": "npx shadow-cljs release browser",
+    "build:production": "npm run build:native && npm run build:wasm && npm run build:browser",
     "css:dashboard": "npx @tailwindcss/cli -i src/css/dashboard.css -o out/dashboard/dashboard.css --minify",
     "build:dashboard": "npm run css:dashboard && npx shadow-cljs release dashboard",
-    "build:all": "npm run build:native && npx shadow-cljs release server dashboard",
+    "build:all": "npm run build:native && npx shadow-cljs release server dashboard && npm run build:browser",
     "watch": "npx shadow-cljs watch server",
+    "watch:browser": "npx shadow-cljs watch browser",
     "watch:dashboard": "npm run css:dashboard && npx shadow-cljs watch dashboard",
-    "watch:all": "npx shadow-cljs watch server dashboard",
+    "watch:all": "npx shadow-cljs watch server dashboard browser",
     "test": "npx shadow-cljs compile test && node out/tests.js"
   },
   "dependencies": {

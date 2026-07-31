@@ -8,4 +8,9 @@
   :test {:target :node-test
          :output-to "out/tests.js"
          :test-dir "test"
-         :ns-regexp "-test$"}}}
+         :ns-regexp "-test$"}
+  :browser {:target :browser
+            :output-dir "docs/js"
+            :asset-path "/snapkitty-clojure-lisp-bridge/js"
+            :modules {:main {:init-fn snapkitty.lisp.integration.world/init!}}
+            :compiler-options {:optimizations :advanced}}}}
