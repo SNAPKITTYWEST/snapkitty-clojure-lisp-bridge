@@ -429,10 +429,14 @@ button, input, textarea { font: inherit; color: inherit; }
           </div>
 
           <div style="margin-top: 16px; border-top: 1px solid var(--line-soft); padding-top: 16px;">
-            <h3 style="color: var(--gold); font-size: 0.8rem; margin: 0 0 12px; text-transform: uppercase;">Inference</h3>
+            <h3 style="color: var(--gold); font-size: 0.8rem; margin: 0 0 12px; text-transform: uppercase;">Queries</h3>
             <div class="input-group">
               <input type="text" id="query-input" placeholder="Query belief (e.g., Socrates is mortal)">
-              <button onclick="queryBelief()">Query</button>
+              <button onclick="queryBelief()">Exact</button>
+            </div>
+            <div class="input-group">
+              <input type="text" id="semantic-input" placeholder="Semantic search (e.g., mortality)">
+              <button onclick="semanticSearch()">🔍 Semantic</button>
             </div>
           </div>
 
@@ -484,6 +488,11 @@ button, input, textarea { font: inherit; color: inherit; }
       </div>
     </div>
   </div>
+
+  <script type="module">
+    import ONNXBridge from './onnx-bridge.mjs';
+    window.ONNXBridge = ONNXBridge;
+  </script>
 
   <script>
 // ========================================================================
@@ -581,6 +590,49 @@ function queryBelief() {
     matches.forEach(m => {
       logExecution('query_result', `${m.label} (${m.status})`);
     });
+  }
+
+  input.value = '';
+  render();
+}
+
+async function semanticSearch() {
+  const input = document.getElementById('semantic-input');
+  const query = input.value.trim();
+
+  if (!query) return;
+
+  logExecution('semantic_search', `Searching for: "${query}"`);
+
+  try {
+    if (!window.ONNXBridge) {
+      logExecution('error', 'ONNX not loaded');
+      return;
+    }
+
+    // Get all active beliefs
+    const candidates = Array.from(state.beliefs.values())
+      .filter(b => b.status !== STATUS.RETRACTED)
+      .map(b => b.label);
+
+    if (candidates.length === 0) {
+      logExecution('semantic_result', 'No beliefs to search');
+      input.value = '';
+      return;
+    }
+
+    // Perform semantic search
+    const results = await window.ONNXBridge.search(query, candidates);
+
+    if (results.length === 0) {
+      logExecution('semantic_result', 'No semantically similar beliefs found');
+    } else {
+      results.slice(0, 5).forEach(r => {
+        logExecution('semantic_result', `"${r.text}" (similarity: ${(r.similarity * 100).toFixed(0)}%)`);
+      });
+    }
+  } catch (err) {
+    logExecution('error', `Semantic search failed: ${err.message}`);
   }
 
   input.value = '';
@@ -842,10 +894,23 @@ window.addEventListener('load', () => {
 window.assertBelief = assertBelief;
 window.addRule = addRule;
 window.queryBelief = queryBelief;
+window.semanticSearch = semanticSearch;
 window.retractBelief = retractBelief;
 window.socraticDemo = socraticDemo;
 window.contradictionDemo = contradictionDemo;
 window.clearAll = clearAll;
+
+// Initialize ONNX on page load
+window.addEventListener('load', async () => {
+  if (window.ONNXBridge) {
+    const ready = await window.ONNXBridge.initialize();
+    if (ready) {
+      logExecution('onnx', 'Semantic search ready (ONNX in-browser)');
+    } else {
+      logExecution('onnx', 'Semantic search ready (fallback mode)');
+    }
+  }
+});
   </script>
 </body>
 </html>
