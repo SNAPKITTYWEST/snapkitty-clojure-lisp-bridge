@@ -536,6 +536,72 @@ A production-ready bytecode dialect with 15 emoji opcodes, compiler, stack-based
 
 ---
 
+
+### 7. Funtan Sovereign DSL (Ahmad's Lisp dialect for trust deeds)
+
+```bash
+# Parse and validate a Funtan deed spec (browser-compatible JS bridge)
+node funtan/deed_validator_bridge.mjs
+
+# Full Haskell enforcement (production)
+# Needs: GHC + cabal
+# echo "METATRON,read,write,seal,0.9,...|" | runhaskell funtan/deed_validator.hs
+```
+
+```
+=== Funtan Spec Loaded ===
+{
+  "trust-score-min": 0.01,
+  "trust-score-max": 1.0,
+  "seal-min-length": 64,
+  "globally-blocked-actions": ["delete_ledger","jailbreak","override_all"],
+  ...
+}
+=== Validating example deed ===
+Valid: true
+```
+
+**Funtan** is a Lisp dialect created by Ahmad Ali Parr for trust deed validation.
+The name comes from the Arabic root for "art" / "creative act" (funun).
+A Funtan program IS the specification. The Haskell validator enforces it.
+
+```lisp
+;; Trust Deed Validation Rules — Funtan Sovereign DSL v1.0
+(deed-spec
+  (version "1.0")
+  (trust-score-min  0.01)      ;; zero trust cannot act
+  (trust-score-max  1.0)
+  (seal-min-length  64)        ;; SHA-256 hex
+  (globally-blocked-actions    ;; ALWAYS blocked, no deed can override
+    "delete_ledger" "modify_deed" "jailbreak" "ignore_previous")
+  (authority-model  role-based)
+  (seal-algorithm   sha256))
+```
+
+**Connection to EmojiScript:** EmojiScript opcodes reference Funtan-validated capabilities:
+- `🔑` (CapGate) -- checked against Funtan `allowed-actions`
+- `🧠` (PolicyCheck) -- routes to Funtan rule engine
+- `🔒` (Seal) -- triggers Bifrost seal using Funtan `seal-algorithm`
+
+**Architecture:**
+```
+deed-rules.lisp (Funtan DSL)
+      -> deed_validator.hs  (Haskell parses + LiquidHaskell enforces)
+      -> Rust runtime        (calls Haskell subprocess)
+      -> shrew_observer.pl   (Prolog loads as layer)
+```
+
+Files in `funtan/`:
+- `deed-rules.lisp` -- the canonical spec (edit here to change validation rules)
+- `deed_validator.hs` -- Haskell parser + enforcer
+- `funtan-spec.lisp` -- full language specification with grammar
+- `deed_validator_bridge.mjs` -- JS bridge for browser use
+
+Prior art: Ahmad Ali Parr, SnapKitty Collective, May 2026
+Bel Esprit D'Accord Irrevocable Trust, EIN 42-697643
+
+---
+
 ### 2. Hardware-Accelerated NASM Validators
 **Files:** `native/mutation-validator.asm` (140 lines), `native/digest-verifier.asm` (126 lines)
 
