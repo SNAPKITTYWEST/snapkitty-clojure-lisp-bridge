@@ -1170,3 +1170,304 @@ theorem factor_robust (f : Factor) (data : MarketData) :
 > LLMs used **only** for: Doc Gen / Schema Mapping / UI (Sandboxed, Non-Consensus).
 >
 > `#SovereignQuant` `#FormalVerification` `#RamanujanFinance` `#EnterpriseInABox`
+
+
+---
+
+## AHMAD DOCKING — SOVEREIGN LISP MACHINE USER GUIDE
+
+> **Named pattern by Ahmad Ali Parr** — Bel Esprit D'Accord Irrevocable Trust (EIN 42-697643)
+>
+> Source repo: [`SNAPKITTYWEST/ahmad-docking`](https://github.com/SNAPKITTYWEST/ahmad-docking)
+>
+> Bridge: `backend/ahmad-docking/lisp-bridge.mjs` + `backend/ahmad-docking/machine-client.mjs`
+
+---
+
+### What Is the Ahmad Docking Machine?
+
+The Ahmad Docking Lisp machine is a **sovereign Lisp runtime** embedded in the SNAPKITTYWEST stack. It replaces the legacy JS eval stub (`lisp-machine-legacy.mjs`) with a machine that has:
+
+- A real heap with mark-and-sweep GC
+- A symbol table (interned, bijective id to name)
+- A lexical environment chain (immutable frames after creation)
+- A recursive evaluator with 512-depth overflow guard
+- A WORM-sealed `WorldDump` — the complete machine state, hashable, restorable from any tick
+- Agent identity: `METATRON` by default
+
+It is wired into `metatron.mjs` at **depth 5** of the BOB ResonanceGraph — the same depth as METATRON. Every Lisp evaluation passes through the METATRON gate before the machine fires.
+
+---
+
+### Quick Start
+
+#### JavaScript (Node.js)
+
+```js
+import { evalLisp, worldDump, ahmadDock } from './backend/ahmad-docking/lisp-bridge.mjs'
+
+// Basic evaluation
+const r = evalLisp('(+ 1618 618)')
+// => { result: 2236, tick: 1, agent: 'METATRON', seal: 'a3f2...' }
+
+// Nested expressions
+evalLisp('(* (+ 1 2) (- 10 4))')
+// => { result: 18, tick: 2, agent: 'METATRON', seal: '...' }
+
+// Define a variable
+evalLisp('(define phi 1.618)')
+evalLisp('(* phi phi)')
+// => { result: 2.617924, tick: 4, ... }
+
+// World dump — WORM seal of machine state
+const dump = worldDump()
+// => { tick: 4, agent: 'METATRON', env: { phi: 1.618 }, seal: '...' }
+```
+
+#### Machine Client API (metatron.mjs integration)
+
+```js
+import { evaluate, handshake, seal, snapshot, batchEval } from
+  './backend/ahmad-docking/machine-client.mjs'
+
+// Evaluate + get result
+evaluate('(cons 1 (cons 2 nil))')
+// => { result: [1, [2, null]], tick: 1, agent: 'METATRON', seal: '...' }
+
+// BOB handshake entry (for bob-bridge protocol)
+handshake('(+ 1 2)')
+// => { agent: 'METATRON-LISP', hat: 'lisp', ts: ..., tick: ..., result: '3', seal: '...' }
+
+// WORM seal any value
+seal({ factor: 'QB-HECKE-42', sharpe: 1.87 })
+// => { token: '...', seal: '...', agent: 'METATRON', observed: true }
+
+// Snapshot machine state
+snapshot()
+// => { tick: N, agent: 'METATRON', env: { ... }, seal: '...' }
+
+// Batch evaluate
+batchEval(['(+ 1 2)', '(* 3 4)', '(- 10 5)'])
+// => { results: [...], chain_seal: '...' }
+```
+
+#### Through METATRON Gate (gated evaluation)
+
+```js
+import { metatronEvalLisp, metatronSnapshot } from './backend/bob/metatron.mjs'
+
+// Gated eval — METATRON approves first, then Lisp machine fires
+const result = await metatronEvalLisp('(+ phi 1)', 'ENKI')
+// => { permitted: true, metatron_seal: '...', result: 2.618, tick: ..., seal: '...' }
+
+// If METATRON rejects:
+// => { permitted: false, reason: 'METATRON: cage not intact', result: null, seal: null }
+
+// Snapshot through gate
+const dump = await metatronSnapshot()
+// => { tick: N, agent: 'METATRON', env: { ... }, seal: '...' }
+```
+
+---
+
+### Language Reference
+
+#### Arithmetic
+
+```lisp
+(+ 1 2)           ; 3
+(- 10 3)          ; 7
+(* 6 7)           ; 42
+(/ 22 7)          ; 3.142857...
+(+ 1 2 3 4 5)     ; 15  -- variadic
+```
+
+#### Lists
+
+```lisp
+(cons 1 2)              ; (1 . 2)  -- dotted pair
+(cons 1 (cons 2 nil))   ; (1 2)    -- proper list
+(list 1 2 3)            ; (1 2 3)
+(car (list 1 2 3))      ; 1
+(cdr (list 1 2 3))      ; (2 3)
+```
+
+#### Conditionals
+
+```lisp
+(if true 1 2)           ; 1
+(if false 1 2)          ; 2
+(if (null? nil) "empty" "full")  ; "empty"
+```
+
+#### Definitions and Let
+
+```lisp
+(define x 42)
+(* x 2)                 ; 84
+
+(let ((a 3) (b 4))
+  (* a b))              ; 12
+
+(begin
+  (define n 10)
+  (* n n))              ; 100
+```
+
+#### Ahmad Docking Extensions
+
+```lisp
+(phi)                   ; 1.6180339887...  -- golden ratio
+(freq-anchor 1618)      ; drift_ns at 1618 Hz -- golden ratio timing gate
+(worm-seal "data")      ; SHA-256 seal of string
+(world-dump)            ; current machine state snapshot
+(agent-id)              ; "METATRON"
+(tick)                  ; current evaluation tick
+```
+
+#### Quoting
+
+```lisp
+(quote (1 2 3))         ; (1 2 3) -- unevaluated
+'(a b c)                ; (a b c) -- shorthand
+```
+
+---
+
+### Clojure Port (snapkitty-clojure-lisp-bridge integration)
+
+The Clojure port lives at `clojure/lisp_machine.clj` in `ahmad-docking`.
+It has identical semantics to the JS bridge — same word types, same env chain, same world seal.
+
+```clojure
+;; Run the REPL
+(run-repl)
+;; lambda> (+ 1618 618)
+;; => {:tag :int, :val 2236}
+
+;; Evaluate programmatically
+(def m (make-machine "METATRON"))
+(machine-eval! m "(+ 1 2)")
+; => {:tag :int, :val 3}
+
+;; World seal
+(world-seal m)
+; => {:tick 1, :agent "METATRON", :seal "0000000000000009"}
+```
+
+---
+
+### HolyC Triad
+
+The HolyC interpreter (`src/holyc/interp.rs`) runs alongside the Lisp machine in the LOC triad cycle.
+
+```
+Print("sovereign")       -- logs to WORM, returns Void
+FreqAnchor(1618)         -- golden ratio timing gate, drift_ns % (1e9 / 1618)
+x = 1618 + 618           -- assign: x = 2236
+JitCompile("x * 2")      -- compile + cache with content-addressed key
+```
+
+Every HolyC execution produces a WORM-sealed result:
+```
+{ value, log: [...], seal: "a3f2c7e1...", freq_hz: 1618 }
+```
+
+---
+
+### No-Cloning Agent Governance
+
+The `haskell/NoCloningTheorem.hs` file encodes the quantum no-cloning theorem into the type system.
+
+```haskell
+-- A QuantumTemp can be observed EXACTLY ONCE.
+-- The GHC compiler rejects any attempt to observe it twice.
+noCloningProof :: QuantumTemp %1 -> ObservationResult
+
+-- Five-pass ERE pipeline -- any failure -> Destroyed
+erePipeline :: QuantumPipelineState %1
+            -> EREPassResult -> EREPassResult -> EREPassResult
+            -> EREPassResult -> EREPassResult
+            -> QuantumPipelineState
+```
+
+**Ahmad Docking pattern:** agent decisions are quantum states.
+- `Superposed` -- alive, uncollapsed, linear
+- `Collapsed` -- extracted to classical, safe to read
+- `Destroyed` -- terminal, no path back
+
+---
+
+### BOB Handshake Protocol (v2)
+
+The `backend/bob/worm/lisp-handshake.json` now registers METATRON-LISP as step 3:
+
+```
+Step 1: AHMAD-BOT   -- crawls org, writes ahmad-bot-crawl.sexp  (hat: red)
+Step 2: EDUALC      -- crawls org, cross-checks,  writes edaulc-crawl.sexp   (hat: blue)
+Step 3: METATRON-LISP -- evaluates both through Lisp machine, writes metatron-handshake.sexp
+Step 4: BOB         -- reads all three, reasons via Prolog, emits bob-handshake.sexp
+Step 5: BOB         -- WORM seals scoreboard.json (append-only, SHA-256 chain)
+```
+
+To run the handshake from JavaScript:
+
+```js
+import { runSexpHandshake } from './backend/ahmad-docking/machine-client.mjs'
+
+const sexp = runSexpHandshake([
+  '(+ 1 2)',
+  '(cons phi 1.618)',
+  '(worm-seal "factor-QB-042")'
+])
+// => "(machine-handshake
+  (agent "METATRON")
+  (tick 3)
+  (world-seal "...")
+  ...)"
+```
+
+---
+
+### Architecture Position
+
+```
+BOB ResonanceGraph
+  Depth 0: SOURCE
+  Depth 1: RETRIEVAL    (ORACLE)
+  Depth 2: FILTERING    (SENTINEL)
+  Depth 3: RANKING      (PRISM/AXIOM)
+  Depth 4: ASSEMBLY     (NEXUS)
+  Depth 5: METATRON     <-- Ahmad Docking Lisp machine lives HERE
+  Depth 5: REASONING    (MagmaCore)
+  Depth 6: MagmaCore    (BOB)
+
+Every Lisp evaluation:
+  metatronGate() -- cage check at depth 5
+      |
+  lisp-bridge.mjs -- sovereign Lisp machine (word/heap/env/eval/seal)
+      |
+  { result, tick, agent: 'METATRON', seal }
+      |
+  WORM chain -- every tick sealed
+```
+
+---
+
+### Files Added
+
+| File | Repo | Role |
+|------|------|------|
+| `src/lisp/` (9 files) | `ahmad-docking` | Rust Lisp machine canonical |
+| `src/holyc/interp.rs` | `ahmad-docking` | HolyC triad interpreter |
+| `haskell/NoCloningTheorem.hs` | `ahmad-docking` | Ahmad Docking no-cloning proof |
+| `clojure/lisp_machine.clj` | `ahmad-docking` | Clojure port for this bridge |
+| `backend/ahmad-docking/lisp-bridge.mjs` | this repo | JS sovereign Lisp machine |
+| `backend/ahmad-docking/machine-client.mjs` | this repo | evaluate / handshake / seal / snapshot |
+| `backend/bob/metatron.mjs` | this repo | patched: metatronEvalLisp / metatronHandshake |
+| `backend/bob/worm/lisp-handshake.json` | this repo | METATRON-LISP registered as step 3 |
+
+---
+
+*Ahmad Docking -- Omega = TRUST and CODE*
+
