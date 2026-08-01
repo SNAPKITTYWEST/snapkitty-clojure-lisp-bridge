@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE execution_node [
+  <!-- Execution node DTD — ISO 8879:1986 -->
+
+  <!ELEMENT execution_node    - - (configuration, input_spec, synthesis_tree, proof_receipt)>
+  <!ATTLIST execution_node
+    id      ID                              #REQUIRED
+    status  (SUCCESS|FAILURE|IN_PROGRESS)  #REQUIRED>
+
+  <!ELEMENT configuration  - - (flag*, target_algorithm?)>
+  <!ELEMENT flag           - O EMPTY>
+  <!ATTLIST flag
+    key    CDATA  #REQUIRED
+    value  CDATA  #REQUIRED>
+  <!ELEMENT target_algorithm - O EMPTY>
+  <!ATTLIST target_algorithm
+    name  CDATA  #REQUIRED>
+
+  <!ELEMENT input_spec           - - (partial_ast, relational_constraint)>
+  <!ELEMENT partial_ast          - - (#PCDATA)>
+  <!ELEMENT relational_constraint - - (#PCDATA)>
+
+  <!ELEMENT synthesis_tree   - - (iteration+)>
+  <!ELEMENT iteration        - - (minikanren_trace, z3_refinement_check, mutation_event?, proof_generation?)>
+  <!ATTLIST iteration
+    pass    NUMBER                          #REQUIRED
+    status  (VERIFIED|REJECTED_BY_SMT|PENDING) #REQUIRED>
+
+  <!ELEMENT minikanren_trace   - - (unification_step+, derived_ast)>
+  <!ATTLIST minikanren_trace
+    engine  CDATA  #REQUIRED>
+  <!ELEMENT unification_step   - - (goal, binding+)>
+  <!ATTLIST unification_step
+    id  ID  #REQUIRED>
+  <!ELEMENT goal     - - (#PCDATA)>
+  <!ELEMENT binding  - O EMPTY>
+  <!ATTLIST binding
+    var  CDATA  #REQUIRED
+    val  CDATA  #REQUIRED>
+  <!ELEMENT derived_ast  - - (#PCDATA)>
+
+  <!ELEMENT z3_refinement_check - - (smt_lib2_script, solver_output, violation_reason?)>
+  <!ATTLIST z3_refinement_check
+    solver  CDATA        #REQUIRED
+    result  (sat|unsat)  #REQUIRED>
+  <!ELEMENT smt_lib2_script - - (#PCDATA)>
+  <!ELEMENT solver_output   - - (#PCDATA)>
+  <!ELEMENT violation_reason - O (#PCDATA)>
+
+  <!ELEMENT mutation_event  - O EMPTY>
+  <!ATTLIST mutation_event
+    action  CDATA  #REQUIRED>
+  <!ELEMENT reason  - - (#PCDATA)>
+
+  <!ELEMENT proof_generation  - O (lean4_certificate)>
+  <!ELEMENT lean4_certificate - - (#PCDATA)>
+
+  <!ELEMENT proof_receipt  - - (summary, final_synthesized_ast)>
+  <!ATTLIST proof_receipt
+    mode  (VERBOSE|COMPACT)  #REQUIRED>
+  <!ELEMENT summary              - - (total_iterations, smt_status, lean_status)>
+  <!ELEMENT total_iterations     - - (#PCDATA)>
+  <!ELEMENT smt_status           - - (#PCDATA)>
+  <!ELEMENT lean_status          - - (#PCDATA)>
+  <!ELEMENT final_synthesized_ast - - (#PCDATA)>
+]>
+
+<execution_node id="exec-tree-invert-001" status="SUCCESS">
+
+  <configuration>
+    <flag key="verbose"               value="true"/>
+    <flag key="max_refinement_depth"  value="5"/>
+    <target_algorithm name="tree-invert"/>
+  </configuration>
+
+  <input_spec>
+    <partial_ast>
+(define tree-invert
+  (lambda (t)
+    (if (null? t)
+        '()
+        (list (car t) _ (tree-invert (cadr t))))))
+    </partial_ast>
+    <relational_constraint>
+(evalo '(tree-invert '(1 (2 () ()) (3 () ()))) '() '(1 (3 () ()) (2 () ())))
+    </relational_constraint>
+  </input_spec>
+
+  <synthesis_tree>
+
+    <!-- PASS 1: FAILS REFINEMENT CHECK -->
+    <iteration pass="1" status="REJECTED_BY_SMT">
+      <minikanren_trace engine="JS_MINIKANREN">
+        <unification_step id="u1">
+          <goal>evalo (cadr t) env val_left</goal>
+          <binding var="_" val="(tree-invert (cadr t))"/>
+        </unification_step>
+        <derived_ast>
+(list (car t) (tree-invert (cadr t)) (tree-invert (cadr t)))
+        </derived_ast>
+      </minikanren_trace>
+
+      <z3_refinement_check solver="Z3_WASM" result="unsat">
+        <smt_lib2_script>
+(set-logic QF_LIA)
+(declare-fun left_subtree_val () Int)
+(declare-fun right_subtree_val () Int)
+; Refinement invariant: inversion must SWAP subtrees, not duplicate
+; left_val must equal right_input (3), not left_input (2)
+(assert (= left_subtree_val 2))
+(assert (= right_subtree_val 3))
+(assert (= left_subtree_val right_subtree_val))
+; ^ VIOLATION: duplicated left branch, swap invariant breached
+(check-sat)
+        </smt_lib2_script>
+        <solver_output>unsat</solver_output>
+        <violation_reason>
+Subtree symmetry invariant breached: duplicated left branch instead of
+swapping right branch. Hole _ was bound to (tree-invert (cadr t)) but
+must be bound to (tree-invert (caddr t)) to satisfy the swap constraint.
+        </violation_reason>
+      </z3_refinement_check>
+
+      <mutation_event action="AST_MUTATE"/>
+
+    </iteration>
+
+    <!-- PASS 2: SUCCESS AND VERIFIED -->
+    <iteration pass="2" status="VERIFIED">
+      <minikanren_trace engine="JS_MINIKANREN">
+        <unification_step id="u2">
+          <goal>evalo (caddr t) env val_right</goal>
+          <binding var="_" val="(tree-invert (caddr t))"/>
+        </unification_step>
+        <derived_ast>
+(define tree-invert
+  (lambda (t)
+    (if (null? t)
+        '()
+        (list (car t) (tree-invert (caddr t)) (tree-invert (cadr t))))))
+        </derived_ast>
+      </minikanren_trace>
+
+      <z3_refinement_check solver="Z3_WASM" result="sat">
+        <smt_lib2_script>
+(set-logic QF_LIA)
+(declare-fun left_in  () Int)
+(declare-fun right_in () Int)
+(declare-fun left_out () Int)
+(declare-fun right_out () Int)
+; Input tree: (1 (2 () ()) (3 () ()))
+(assert (= left_in  2))
+(assert (= right_in 3))
+; Inversion swap invariant: left_out == right_in, right_out == left_in
+(assert (= left_out  right_in))
+(assert (= right_out left_in))
+(check-sat)
+(get-model)
+        </smt_lib2_script>
+        <solver_output>
+sat
+(model
+  (define-fun left_in  () Int 2)
+  (define-fun right_in () Int 3)
+  (define-fun left_out () Int 3)
+  (define-fun right_out () Int 2)
+)
+        </solver_output>
+      </z3_refinement_check>
+
+      <proof_generation>
+        <lean4_certificate>
+-- Lean 4 proof: tree_invert_correct
+-- depth preserved AND structure is mirror image
+theorem tree_invert_correct (t : Tree) :
+    Tree.depth (tree_invert t) = Tree.depth t
+    &amp;&amp; Tree.mirror (tree_invert t) = t := by
+  induction t with
+  | leaf => rfl
+  | node val l r ihl ihr =>
+    simp [tree_invert]
+    exact &lt;| by omega, by rw [ihl, ihr] |&gt;
+        </lean4_certificate>
+      </proof_generation>
+    </iteration>
+
+  </synthesis_tree>
+
+  <proof_receipt mode="VERBOSE">
+    <summary>
+      <total_iterations>2</total_iterations>
+      <smt_status>SAT</smt_status>
+      <lean_status>PROVEN</lean_status>
+    </summary>
+    <final_synthesized_ast>
+(define tree-invert
+  (lambda (t)
+    (if (null? t)
+        '()
+        (list (car t) (tree-invert (caddr t)) (tree-invert (cadr t))))))
+    </final_synthesized_ast>
+  </proof_receipt>
+
+</execution_node>
