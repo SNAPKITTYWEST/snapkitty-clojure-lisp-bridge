@@ -41,6 +41,17 @@
 **Status:** ✅ PRODUCTION v1.1.0 — All systems operational  
 **Architecture:** Live runtime + 3 integrated consoles + semantic search + formal proofs
 
+
+<p align="center">
+  <a href="./boot.sh">
+    <img src="https://img.shields.io/badge/cold_boot-bash_boot.sh-00ff88?style=for-the-badge&logo=gnu-bash&logoColor=black" alt="Cold Boot"/>
+  </a>
+</p>
+
+<p align="center">
+  <code>curl -fsSL https://raw.githubusercontent.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge/main/boot.sh | bash</code>
+</p>
+
 ### Interactive Consoles (Pick One)
 | Console | What It Does | Link |
 |---------|-------------|------|
