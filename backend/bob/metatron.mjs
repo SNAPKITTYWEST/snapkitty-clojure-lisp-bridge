@@ -404,3 +404,83 @@ export {
   PHI_INV,
   CUBE_NODES,
 }
+
+// ── AHMAD DOCKING — Sovereign Lisp Machine at Depth 5 ───────────────────────
+// The Lisp machine lives at the same depth as METATRON in the ResonanceGraph.
+// METATRON gates execution. The Lisp machine evaluates the expression.
+// Together: gate -> evaluate -> seal -> inject into cube.
+//
+// Import: backend/ahmad-docking/machine-client.mjs
+// The import is dynamic so this module works without the bridge present (graceful).
+
+let _lispClient = null
+
+async function getLispClient () {
+  if (_lispClient) return _lispClient
+  try {
+    _lispClient = await import('../ahmad-docking/machine-client.mjs')
+  } catch {
+    _lispClient = null
+  }
+  return _lispClient
+}
+
+/**
+ * Evaluate a Lisp expression through the Ahmad Docking machine.
+ * Passes through metatronGate first -- no evaluation without METATRON approval.
+ *
+ * @param {string} src   - Lisp source string e.g. "(+ 1618 618)"
+ * @param {string} agent - agent requesting evaluation
+ * @returns {{ result, tick, seal, permitted, metatron_seal }}
+ */
+export async function metatronEvalLisp (src, agent = 'METATRON') {
+  // Step 1: METATRON gate
+  const gate = metatronGate('lisp-eval', agent)
+  if (!gate.permitted) {
+    return {
+      permitted:      false,
+      reason:         gate.reason,
+      metatron_seal:  gate.metatron_seal,
+      result:         null,
+      tick:           null,
+      seal:           null,
+    }
+  }
+
+  // Step 2: Evaluate through sovereign Lisp machine
+  const client = await getLispClient()
+  if (!client) {
+    // Fallback: inline eval (no external dep)
+    const { evalLisp } = await import('../ahmad-docking/lisp-bridge.mjs').catch(() => ({
+      evalLisp: src => ({ result: `[no-bridge: ${src}]`, tick: 0, seal: 'no-bridge', agent })
+    }))
+    const ev = evalLisp(src)
+    return { permitted: true, metatron_seal: gate.metatron_seal, ...ev }
+  }
+
+  const ev = client.evaluate(src)
+  return {
+    permitted:     true,
+    metatron_seal: gate.metatron_seal,
+    ...ev,
+  }
+}
+
+/**
+ * Ahmad Docking handshake entry — evaluate src and format as BOB-protocol sexp.
+ */
+export async function metatronHandshake (src) {
+  const client = await getLispClient()
+  if (!client) return null
+  return client.handshake(src, 'metatron')
+}
+
+/**
+ * Take a WORM world-dump snapshot of the Lisp machine state.
+ */
+export async function metatronSnapshot () {
+  const client = await getLispClient()
+  if (!client) return null
+  return client.snapshot()
+}
+
