@@ -1,0 +1,22 @@
+# Force GitHub to correctly identify languages in this repo.
+# Without this, GitHub misidentifies Forth graveyard files as Janet/Hy.
+
+*.cljs        linguist-language=Clojure
+*.clj         linguist-language=Clojure
+*.hs          linguist-language=Haskell
+*.pl          linguist-language=Prolog
+*.rs          linguist-language=Rust
+*.lean        linguist-language=Lean
+*.v           linguist-language=Coq
+*.mjs         linguist-language=JavaScript
+*.dsl         linguist-language=Scheme
+*.lisp        linguist-language=Common\ Lisp
+*.apl         linguist-language=APL
+*.forth       linguist-language=Forth
+*.fth         linguist-language=Forth
+
+# These are graveyard/archive files -- don't let them skew language stats
+backend/bob/worm/meta-repos/**        linguist-detectable=false
+orchestrator/shadow/runtime/**        linguist-detectable=false
+native/target/**                      linguist-detectable=false
+native/build/**                       linguist-detectable=false
