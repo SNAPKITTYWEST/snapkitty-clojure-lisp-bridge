@@ -1,70 +1,102 @@
 {
-  "_doc": "LISP handshake — the shared stone. AHMAD-BOT and EDUALC cannot speak directly. They meet here. Both write deterministic S-expressions. BOB reads both and seals this file as proof they reasoned together.",
-  "_protocol": "repo-mediated-sexp-handshake-v1",
-
+  "_doc": "LISP handshake -- the shared stone. AHMAD-BOT and EDUALC cannot speak directly. They meet here. BOB reads both and seals. METATRON-LISP is the sovereign evaluator.",
+  "_protocol": "repo-mediated-sexp-handshake-v2",
+  "_machine": "ahmad-docking -- github.com/SNAPKITTYWEST/ahmad-docking",
   "interfaces": {
     "ahmad-bot": {
-      "writes":    "worm/ahmad-bot-crawl.sexp",
-      "reads":     "worm/edualc-crawl.sexp",
+      "writes": "worm/ahmad-bot-crawl.sexp",
+      "reads": "worm/edualc-crawl.sexp",
       "publishes": "arena.crawl.red",
-      "schema":    "constitution/arena.sexp",
-      "deed":      "deeds/ahmad-bot.deed"
+      "schema": "constitution/arena.sexp",
+      "deed": "deeds/ahmad-bot.deed"
     },
     "edualc": {
-      "writes":    "worm/edualc-crawl.sexp",
-      "reads":     "worm/ahmad-bot-crawl.sexp",
+      "writes": "worm/edualc-crawl.sexp",
+      "reads": "worm/ahmad-bot-crawl.sexp",
       "publishes": "arena.crawl.blue",
-      "schema":    "constitution/arena.sexp",
-      "deed":      "deeds/edualc.deed"
+      "schema": "constitution/arena.sexp",
+      "deed": "deeds/edualc.deed"
     },
     "bob": {
-      "reads":     ["worm/ahmad-bot-crawl.sexp", "worm/edualc-crawl.sexp"],
-      "writes":    ["worm/bob-handshake.sexp", "worm/scoreboard.json"],
+      "reads": [
+        "worm/ahmad-bot-crawl.sexp",
+        "worm/edualc-crawl.sexp"
+      ],
+      "writes": [
+        "worm/bob-handshake.sexp",
+        "worm/scoreboard.json"
+      ],
       "seal_rule": "BOB is the only agent that may seal. Submitters propose. BOB approves.",
-      "deed":      "deeds/bob.deed"
+      "deed": "deeds/bob.deed"
+    },
+    "metatron-lisp": {
+      "machine": "ahmad-docking/clojure/lisp_machine.clj",
+      "bridge": "backend/ahmad-docking/lisp-bridge.mjs",
+      "client": "backend/ahmad-docking/machine-client.mjs",
+      "role": "sovereign Lisp evaluator -- evaluates S-expressions from any agent",
+      "api": {
+        "evaluate": "evalLisp(src) -> { result, tick, agent, seal }",
+        "handshake": "handshake(src) -> BOB-protocol sexp entry",
+        "seal": "seal(value) -> Ahmad Docking WORM seal",
+        "snapshot": "snapshot() -> WorldDump { tick, agent, env, seal }",
+        "runSexpHandshake": "runSexpHandshake([src,...]) -> sexp string for bob-bridge"
+      },
+      "ahmad_docking": {
+        "no_cloning": "haskell/NoCloningTheorem.hs -- observe once, certify once",
+        "freq_anchor": "1618 Hz canonical -- golden ratio timing gate",
+        "world_dump": "serializable machine state -- WORM-sealed per tick",
+        "metatron_depth": 5,
+        "phi_weight": 11.09016994203955
+      }
     }
   },
-
   "handshake_steps": [
     {
       "step": 1,
       "actor": "AHMAD-BOT",
       "action": "crawl SNAPKITTYWEST org via GitHub API",
       "output": "worm/ahmad-bot-crawl.sexp",
-      "format": "s-expression per constitution/arena.sexp",
-      "hat":    "red"
+      "hat": "red"
     },
     {
       "step": 2,
       "actor": "EDUALC",
-      "action": "crawl SNAPKITTYWEST org — reads AHMAD-BOT output to cross-check",
-      "input":  "worm/ahmad-bot-crawl.sexp",
+      "action": "crawl SNAPKITTYWEST org, cross-check AHMAD-BOT output",
       "output": "worm/edualc-crawl.sexp",
-      "format": "s-expression per constitution/arena.sexp",
-      "hat":    "blue"
+      "hat": "blue"
     },
     {
       "step": 3,
-      "actor": "BOB",
-      "action": "read both sexp files, reason via Prolog gravity.pl, emit bob-handshake.sexp",
-      "inputs": ["worm/ahmad-bot-crawl.sexp", "worm/edualc-crawl.sexp"],
-      "output": "worm/bob-handshake.sexp",
-      "format": "s-expression — BOB's verdict"
+      "actor": "METATRON-LISP",
+      "action": "evaluate both sexp files through sovereign Lisp machine, produce machine-handshake sexp",
+      "bridge": "backend/ahmad-docking/machine-client.mjs#runSexpHandshake",
+      "output": "worm/metatron-handshake.sexp"
     },
     {
       "step": 4,
       "actor": "BOB",
-      "action": "WORM seal — SHA-256 chain append to scoreboard.json",
-      "seals":  ["worm/bob-handshake.sexp", "worm/scoreboard.json"],
-      "note":   "Once sealed, no agent may alter. Append-only."
+      "action": "read all three sexp files, reason via Prolog gravity.pl, emit bob-handshake.sexp"
+    },
+    {
+      "step": 5,
+      "actor": "BOB",
+      "action": "WORM seal -- SHA-256 chain append to scoreboard.json",
+      "seals": [
+        "worm/bob-handshake.sexp",
+        "worm/scoreboard.json"
+      ]
     }
   ],
-
   "sexp_contract": {
-    "required_fields": ["agent", "hat", "ts", "repos"],
+    "required_fields": [
+      "agent",
+      "hat",
+      "ts",
+      "repos"
+    ],
     "gravity_formula": "(lines * dep_fan_out * recursion_depth) / total_lines",
     "thresholds": {
-      "alive":  ">= 0.6",
+      "alive": ">= 0.6",
       "broken": ">= 0.3 and < 0.6",
       "orphan": "< 0.3"
     },
@@ -77,22 +109,12 @@
       "no_readme"
     ]
   },
-
   "verification": {
-    "method":      "SHA-256 of sexp file contents",
-    "chain":       "worm/scoreboard.json — append-only WORM chain",
-    "sealed_by":   "BOB only",
-    "any_agent_can_verify": true,
-    "note":        "If ahmad-bot-crawl.sexp hash != chain entry, crawl was tampered."
+    "method": "SHA-256 of sexp file contents",
+    "chain": "worm/scoreboard.json -- append-only WORM chain",
+    "sealed_by": "BOB only",
+    "any_agent_can_verify": true
   },
-
-  "why_repo_mediated": "Neither agent shares a runtime. Both can only trust what is written to the repo and sealed. The S-expression file IS the handshake. The WORM chain IS the proof. No direct communication needed — deterministic files are the protocol.",
-
-  "grisp_convention": {
-    "note": "grisp-shadow-fleet was created 2026-06-18 — may be Codex's parallel build of this same pattern. Cross-check: if grisp-shadow-fleet has a .sexp or scoreboard.json, it is using the same protocol and should be merged or federated.",
-    "action": "run: gh repo view SNAPKITTYWEST/grisp-shadow-fleet --json defaultBranchRef"
-  },
-
   "sealed": false,
   "seal_hash": null,
   "sealed_at": null
