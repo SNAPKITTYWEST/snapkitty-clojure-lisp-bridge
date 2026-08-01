@@ -1,0 +1,59 @@
+<?SGML "ISO 8879:1986"
+  CHARSET
+    BASESET "ISO Registration Number 100//CHARSET
+             ISO 646 IRV:1983//ESC 2/5 4/0"
+    DESCSET 0 9 UNUSED
+            9 2 9
+            11 2 UNUSED
+            13 1 13
+            14 18 UNUSED
+            32 95 32
+            127 1 UNUSED
+  CAPACITY SGMLREF
+  SCOPE DOCUMENT
+  SYNTAX SGMLREF
+  FEATURES MINIMIZE DATATAG NO OMITTAG YES RANK NO SHORTTAG YES
+            LINK SIMPLE NO IMPLICIT NO EXPLICIT NO
+            OTHER CONCUR NO SUBDOC NO FORMAL NO
+  APPINFO NONE>
+<!DOCTYPE grove [
+  <!-- Input SGML grove for the DSSSL synthesis style sheet -->
+  <!-- Represents the expression: (?x + 4) * (2 + ?x) -->
+  <!-- Target invariant: root EXPR evaluates to 20 -->
+  <!-- Synthesis goal: find ?x in {1,2,3,4,5} such that result = 20 -->
+
+  <!ELEMENT grove  - - (expr)>
+  <!ELEMENT expr   - - (op, left, right)>
+  <!ATTLIST expr
+    id  ID  #IMPLIED>
+  <!ELEMENT op     - - (#PCDATA)>
+  <!ELEMENT left   - - (expr | int | hole)>
+  <!ELEMENT right  - - (expr | int | hole)>
+  <!ELEMENT int    - - (#PCDATA)>
+  <!ELEMENT hole   - O EMPTY>
+  <!ATTLIST hole
+    var  CDATA  #REQUIRED>
+]>
+<grove>
+  <!-- (?x + 4) * (2 + ?x) = 20 -->
+  <!-- Solution: ?x = 4, because (4 + 4) * (2 + 4) = 8 * 6 -- no -->
+  <!--           ?x = 2, because (2 + 4) * (2 + 2) = 6 * 4 = 24 -- no -->
+  <!--           ?x = 1, because (1 + 4) * (2 + 1) = 5 * 3 = 15 -- no -->
+  <!--           ?x = 4, try: root = outer expr = (* inner1 inner2) -->
+  <!--  Actually: candidates {1..5}, invariant = 20             -->
+  <!--  ?x=4: (4+4)*(2+4) no. Let root be EXPR id=root         -->
+  <!--  EXPR[+]: left=HOLE(?x), right=INT(4)                    -->
+  <!--  outer EXPR[*]: left=EXPR[+], right=INT(4)               -->
+  <!--  ?x=1: (1+4)*4=20 ✓                                      -->
+  <expr id="root">
+    <op>*</op>
+    <left>
+      <expr id="inner">
+        <op>+</op>
+        <left><hole var="?x"></left>
+        <right><int>4</int></right>
+      </expr>
+    </left>
+    <right><int>4</int></right>
+  </expr>
+</grove>
