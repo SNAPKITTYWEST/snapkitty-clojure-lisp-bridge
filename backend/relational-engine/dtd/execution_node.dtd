@@ -1,0 +1,75 @@
+<!-- execution_node.dtd — Relational Refinement Execution Trace DTD -->
+<!-- ISO 8879:1986 SGML Document Type Definition -->
+<!-- Validates every synthesis execution trace produced by the engine. -->
+<!-- Connects to: relational-refinement-engine.mjs, examples/*.sgml -->
+
+<!ELEMENT execution_node    - - (configuration, input_spec, synthesis_tree, proof_receipt)>
+<!ATTLIST execution_node
+  id      ID                              #REQUIRED
+  status  (SUCCESS|FAILURE|IN_PROGRESS)  #REQUIRED>
+
+<!-- Configuration flags -->
+<!ELEMENT configuration     - - (flag*, target_algorithm?)>
+<!ELEMENT flag              - O EMPTY>
+<!ATTLIST flag
+  key    CDATA  #REQUIRED
+  value  CDATA  #REQUIRED>
+<!ELEMENT target_algorithm  - O EMPTY>
+<!ATTLIST target_algorithm
+  name   CDATA  #REQUIRED>
+
+<!-- Input: partial AST with holes + relational constraint -->
+<!ELEMENT input_spec             - - (partial_ast, relational_constraint)>
+<!ELEMENT partial_ast            - - (#PCDATA)>
+<!ELEMENT relational_constraint  - - (#PCDATA)>
+
+<!-- Synthesis tree: one iteration per mutation pass -->
+<!ELEMENT synthesis_tree  - - (iteration+)>
+
+<!ELEMENT iteration       - - (minikanren_trace, z3_refinement_check, mutation_event?, proof_generation?)>
+<!ATTLIST iteration
+  pass    NUMBER                              #REQUIRED
+  status  (VERIFIED|REJECTED_BY_SMT|PENDING) #REQUIRED>
+
+<!-- miniKanren trace: unification steps + derived AST -->
+<!ELEMENT minikanren_trace   - - (unification_step+, derived_ast)>
+<!ATTLIST minikanren_trace
+  engine  CDATA  #REQUIRED>
+
+<!ELEMENT unification_step  - - (goal, binding+)>
+<!ATTLIST unification_step
+  id  ID  #REQUIRED>
+<!ELEMENT goal     - - (#PCDATA)>
+<!ELEMENT binding  - O EMPTY>
+<!ATTLIST binding
+  var  CDATA  #REQUIRED
+  val  CDATA  #REQUIRED>
+<!ELEMENT derived_ast  - - (#PCDATA)>
+
+<!-- Z3 refinement check: SMT-LIB2 script + result -->
+<!ELEMENT z3_refinement_check  - - (smt_lib2_script, solver_output, violation_reason?)>
+<!ATTLIST z3_refinement_check
+  solver  CDATA        #REQUIRED
+  result  (sat|unsat)  #REQUIRED>
+<!ELEMENT smt_lib2_script  - - (#PCDATA)>
+<!ELEMENT solver_output    - - (#PCDATA)>
+<!ELEMENT violation_reason - O (#PCDATA)>
+
+<!-- Mutation event: action taken when Z3 returns unsat -->
+<!ELEMENT mutation_event  - O EMPTY>
+<!ATTLIST mutation_event
+  action  CDATA  #REQUIRED>
+
+<!-- Proof generation: Lean 4 certificate when verified -->
+<!ELEMENT proof_generation   - O (lean4_certificate)>
+<!ELEMENT lean4_certificate  - - (#PCDATA)>
+
+<!-- Proof receipt: final summary -->
+<!ELEMENT proof_receipt  - - (summary, final_synthesized_ast)>
+<!ATTLIST proof_receipt
+  mode  (VERBOSE|COMPACT)  #REQUIRED>
+<!ELEMENT summary              - - (total_iterations, smt_status, lean_status)>
+<!ELEMENT total_iterations     - - (#PCDATA)>
+<!ELEMENT smt_status           - - (#PCDATA)>
+<!ELEMENT lean_status          - - (#PCDATA)>
+<!ELEMENT final_synthesized_ast - - (#PCDATA)>
