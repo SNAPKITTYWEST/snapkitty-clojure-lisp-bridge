@@ -1,191 +1,82 @@
-# snapkitty-clojure-lisp-bridge
+# SOVEREIGN KNOWLEDGE ENGINE
 
-**The Sovereign Lisp Repository -- McCarthy LISP + Rust REPL + Relational Engine + DSSSL + SGML + Coq + ClojureScript**
+<p align="center">
+  <strong>
+    A black-box portal into McCarthy LISP, semantic knowledge,
+    formal proof, and sovereign execution.
+  </strong>
+</p>
 
-Every layer is a different formalism for the same idea: computation as provable transformation.
-The Rust Lisp machine executes. The relational engine reasons. DSSSL transforms SGML groves.
-Coq verifies the world state machine. ClojureScript bridges to the browser.
+<p align="center">
+  <a href="https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html">
+    <img
+      src="./assets/sovereign-runtime-demo.gif"
+      alt="Enter the Sovereign McCarthy LISP Machine"
+      width="100%"
+      style="border-radius: 0; border: 2px solid #000; box-shadow: 0 0 40px rgba(0, 255, 0, 0.2);"
+    />
+  </a>
+</p>
 
-[![ClojureScript](https://img.shields.io/badge/ClojureScript-shadow--cljs-5881d8?style=flat-square)](src/snapkitty/lisp/)
-[![Rust](https://img.shields.io/badge/Rust-Lisp_REPL-red?style=flat-square)](backend/lisp-rs/)
-[![miniKanren](https://img.shields.io/badge/miniKanren-relational_engine-orange?style=flat-square)](backend/relational-engine/)
-[![DSSSL](https://img.shields.io/badge/DSSSL-ISO_10179-green?style=flat-square)](dsssl-synthesis/)
-[![Coq](https://img.shields.io/badge/Coq-SKC--LISP--WORLD-blue?style=flat-square)](coq/)
-[![Trust](https://img.shields.io/badge/Trust-EIN_42--697643-gold?style=flat-square)](#license)
+<p align="center">
+  <strong>⬡ CLICK THE BLACK BOX TO ENTER McCARTHY'S LISP WORLD ⬡</strong>
+</p>
 
----
+<p align="center">
+  LISP 1958&nbsp;&nbsp;→&nbsp;&nbsp;Semantic Knowledge&nbsp;&nbsp;→&nbsp;&nbsp;EmojiScript Bytecode&nbsp;&nbsp;→&nbsp;&nbsp;Formal Proof
+</p>
 
-## Quick Start -- Pick Your Entry Point
+<p align="center">
+  <video src="./docs/lisp_demo_cleaned.mp4" width="100%" controls autoplay muted loop>
+    <a href="./docs/lisp_demo_cleaned.mp4">▶ Watch: Self-Modifying LISP — miniKanren · Z3 Oracle · Lean 4 · Bifrost WORM</a>
+  </video>
+</p>
 
-### 1. Rust Lisp REPL (fastest, just needs Rust)
-
-```bash
-git clone https://github.com/SNAPKITTYWEST/snapkitty-clojure-lisp-bridge
-cd snapkitty-clojure-lisp-bridge
-cargo run --bin lisp-repl --manifest-path backend/lisp-rs/Cargo.toml
-```
-
-```
-lambda> (+ 1618 618)
-=> 2236
-lambda> (define phi 1.618)
-lambda> (* phi phi)
-=> 2.617924
-lambda> (cons 1 (cons 2 nil))
-=> (1 2)
-lambda> (seal!)
-```
-
-Full Lisp runtime in Rust. Real heap with mark-and-sweep GC, lexical environment
-chain, 512-depth overflow guard. `WorldDump` serializes the entire machine state to
-a SHA-256 sealed snapshot. Agent ID = METATRON. Restore from any prior tick.
+<p align="center">
+  <strong>Self-Modifying Relational LISP — fills its own holes, proves its own correctness, seals to WORM</strong>
+</p>
 
 ---
 
-### 2. Relational Engine (miniKanren -- bidirectional synthesis)
+**Status:** ✅ PRODUCTION v1.1.0 — All systems operational  
+**Architecture:** Live runtime + 3 integrated consoles + semantic search + formal proofs
+
+### Interactive Consoles (Pick One)
+| Console | What It Does | Link |
+|---------|-------------|------|
+| **🧮 Lisp Machine REPL** | Evaluate LISP code, run EmojiScript, verify crypto | [Open](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/sovereign-runtime.html) |
+| **🧠 LTMS Console** | Assert beliefs, add rules, query semantically | [Open](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/ltms-console.html) |
+| **🔬 VM Debugger** | Compile LISP to bytecode, step through execution | [Open](https://snapkittywest.github.io/snapkitty-clojure-lisp-bridge/soulvm-debugger.html) |
+
+---
+
+---
+
+## Quick Start — Developer Reference
+
+| What | Command |
+|------|---------|
+| Rust Lisp REPL | `cargo run --bin lisp-repl --manifest-path backend/lisp-rs/Cargo.toml` |
+| Relational engine | `npm run pipeline` |
+| Tree inversion synthesis | `node backend/relational-engine/examples/tree-invert.mjs` |
+| DSSSL hole-filling | `node dsssl-synthesis/dsssl-kernel.mjs dsssl-synthesis/dsssl-input.sgml` |
+| ClojureScript dev | `npm run watch` |
+| ClojureScript build | `npm run build:production` |
+| Compile LISP→bytecode | `npm run compile:clojure` |
+| Run tests | `npm test` |
+| BOB agent | `npm run serve:bob` |
+| QEC pipeline | `node bob-reasoning-engine/wire-quantum.mjs` |
+| Funtan DSL | `node funtan/deed_validator_bridge.mjs` |
+| Coq proofs | `cd coq && make` |
 
 ```bash
+# Install all deps
 npm install
-npm run pipeline
-
-# Tree inversion synthesis example (2-pass Z3 oracle)
-node backend/relational-engine/examples/tree-invert.mjs
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh  # Rust
+opam install coq coq-mathcomp-ssreflect                           # Coq
+brew install swi-prolog                                           # Prolog (Mac)
 ```
 
-```
-PASS 1: hole = (tree-invert (cadr t))
-  Z3: UNSAT -- duplicated left branch
-
-PASS 2: hole = (tree-invert (caddr t))
-  Z3: SAT
-  Output: [1,[3,[],[]],[2,[],[]]]
-  WORM seal: a3f2c7e1...
-```
-
-`evalo(expr, env, val)` is symmetric. Run forward to evaluate.
-Run backward to synthesize expressions that produce a given value. Same function.
-
----
-
-### 3. DSSSL Synthesis (ISO 10179 -- SGML grove transformation)
-
-```bash
-# Hole-filling: (?x + 4) * 4 = 20  =>  ?x = 1
-node dsssl-synthesis/dsssl-kernel.mjs dsssl-synthesis/dsssl-input.sgml
-
-# Test
-node dsssl-synthesis/test-dsssl.mjs
-```
-
-`sovereign-dsssl.dsl` IS the inference engine. Construction rules `(element HOLE ...)`
-fire during SGML grove traversal. The synthesis kernel fills holes via unify-hole +
-eval-grove-node. SGML structure IS the AST. No intermediate JSON.
-
----
-
-### 4. ClojureScript Lisp Machine (browser + MCP server)
-
-```bash
-npm install
-npm run watch          # dev server, hot reload
-npm run build          # production build
-npm run compile:clojure  # Lisp -> EmojiScript bytecode
-npm test               # 30 tests
-npm run serve:bob      # BOB sovereign compliance agent
-npm run serve:snap-os  # SNAP OS JIT bridge (port 8001)
-```
-
-ClojureScript Lisp compiler -> EmojiScript bytecode (15 opcodes) -> SoulVM stack machine.
-LTMS truth maintenance in Clojure + Prolog + Haskell (3 implementations).
-WASM Blake3 + Ed25519 cryptography. Qdrant vector DB for semantic knowledge.
-
----
-
-### 5. Coq World State Machine (SKC-LISP-WORLD-COQ-001)
-
-```bash
-# Needs: Coq 8.18 + mathcomp
-opam install coq coq-mathcomp-ssreflect
-cd coq && coq_makefile -f _CoqProject -o Makefile && make
-```
-
-18 Coq files. 25 object kinds. 30 opcodes. 11 mutation operations.
-T01-T20: step determinism, journal completeness, dump/restore round-trip,
-generation monotonicity, bounded execution. All real proofs (no Admitted except
-T01/T02/T07 which are interface axioms by design).
-Built by Haiku agents running at zero context -- compacted mid-run, work survived.
-
----
-
-### 6. Quantum QEC Pipeline (Lean + APL + Rust + WORM)
-
-```bash
-node bob-reasoning-engine/wire-quantum.mjs
-```
-
-```
-Stage 1: Lean 4  -- BitFlipCode.recover_single_x (zero sorry)
-Stage 2: APL     -- H*e mod GF(2) syndrome matrix, agrees with Lean
-Stage 3: Rust    -- exhaustive 4-case simulation, exact rational amplitudes
-Stage 4: WORM    -- SHA-256 chain sealed
-```
-
-Three-qubit bit-flip QEC. Any single X error on any qubit is correctable.
-Lean proves it. APL computes parity. Rust simulates. WORM seals. One receipt.
-
----
-
-## Install Everything
-
-```bash
-# Node.js (ClojureScript, relational engine, DSSSL, BOB)
-npm install
-
-# Rust (Lisp REPL, snap-os crates, bifrost)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Coq (world state machine proofs)
-opam install coq coq-mathcomp-ssreflect
-
-# Lean 4 (QEC proofs)
-curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
-cd lean-formalization/skclisp && lake build
-
-# SWI-Prolog (LTMS, governance, syndrome decoder)
-brew install swi-prolog          # Mac
-sudo apt install swi-prolog      # Linux
-```
-
----
-
-## Repository Map
-
-```
-snapkitty-clojure-lisp-bridge/
-|
-+-- backend/lisp-rs/           Rust Lisp machine (METATRON, GC, WorldDump)
-+-- backend/relational-engine/ miniKanren evalo + tree-invert synthesis
-+-- backend/ahmad-docking/     Lisp bridge -> BOB ResonanceGraph depth 5
-+-- backend/bob/               BOB sovereign agent + WORM chain
-+-- backend/snap-os/           Bifrost WORM + SoulVM JIT + cryptography
-|
-+-- coq/                       SKC-LISP-WORLD-COQ-001 (T01-T20 proven)
-+-- dsssl-synthesis/           ISO 10179 DSSSL kernel + test suite
-|
-+-- src/snapkitty/lisp/        ClojureScript compiler + EmojiScript VM
-+-- src/snapkitty/ltms/        Truth Maintenance (Clojure + Prolog + Haskell)
-+-- src/doomsun/solarium/      Qdrant semantic knowledge dashboard
-|
-+-- lean-formalization/        Lean 4 machine semantics (Skclisp)
-+-- bob-reasoning-engine/      BOB phi-resonance + QEC quantum gate
-|   +-- lean/quantum/          BitFlipCode.lean (zero sorry)
-|   +-- apl/QuantumSyndrome.apl  parity matrix GF(2)
-|   +-- rust/src/quantum.rs    BitFlipSimulator (exact rational)
-|
-+-- governance/                Constitution + trust deeds + WORM chain
-```
-
----
 
 ## WHAT IS THIS?
 
