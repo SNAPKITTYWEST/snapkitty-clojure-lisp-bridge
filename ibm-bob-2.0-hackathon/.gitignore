@@ -1,0 +1,111 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+out/
+*.log
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+*.test.js.snap
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Python (if using Python)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Java (if using Java)
+*.class
+*.jar
+*.war
+target/
+
+# Rust (if using Rust)
+target/
+Cargo.lock
+
+# Go (if using Go)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+secrets/
+credentials/
+
+# Large files (screenshots should be committed, but keep them reasonable size)
+*.mp4
+*.mov
+*.avi
+# Note: Keep screenshots in /screenshots/ directory - they're required for submission!
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation build
+docs/_build/
+site/
+
+# Keep these directories but ignore their contents initially
+# Remove these lines once you add actual files
+!screenshots/.gitkeep
+!bob-sessions/.gitkeep
+!docs/.gitkeep
+!tests/.gitkeep
+
+# Made with Bob
