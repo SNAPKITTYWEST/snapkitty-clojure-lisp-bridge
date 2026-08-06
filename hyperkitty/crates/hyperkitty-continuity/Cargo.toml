@@ -1,0 +1,11 @@
+[package]
+name = "hyperkitty-continuity"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "State continuity layer"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+blake2 = { version = "0.10" }

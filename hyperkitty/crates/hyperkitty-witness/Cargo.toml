@@ -1,0 +1,11 @@
+[package]
+name = "hyperkitty-witness"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Witness evolution system"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+hyperkitty-qra = { workspace = true }

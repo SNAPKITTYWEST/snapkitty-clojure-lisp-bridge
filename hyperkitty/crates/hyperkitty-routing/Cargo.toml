@@ -1,0 +1,13 @@
+[package]
+name = "hyperkitty-routing"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Routing pipeline - 11 stages"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+hyperkitty-qra = { workspace = true }
+hyperkitty-constraints = { workspace = true }
+hyperkitty-nand = { workspace = true }

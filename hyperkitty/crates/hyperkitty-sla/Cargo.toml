@@ -1,0 +1,12 @@
+[package]
+name = "hyperkitty-sla"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Symbolic Ledger Algebra"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+hyperkitty-qlg = { workspace = true }
+serde = { workspace = true }

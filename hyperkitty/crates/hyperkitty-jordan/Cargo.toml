@@ -1,0 +1,10 @@
+[package]
+name = "hyperkitty-jordan"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Jordan spectral engine"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }

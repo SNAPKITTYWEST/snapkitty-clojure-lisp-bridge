@@ -1,0 +1,13 @@
+[package]
+name = "hyperkitty-magma"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "MAGMA envelope protocol"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }

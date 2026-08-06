@@ -1,0 +1,14 @@
+[package]
+name = "hyperkitty-isomorphism"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Tripartite Isomorphism QLG-SLA-QRA"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+hyperkitty-qlg = { workspace = true }
+hyperkitty-sla = { workspace = true }
+hyperkitty-qra = { workspace = true }
+serde = { workspace = true }

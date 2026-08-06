@@ -1,0 +1,11 @@
+[package]
+name = "hyperkitty-constraints"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "HyperKitty Constraint Language"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+hyperkitty-nand = { workspace = true }

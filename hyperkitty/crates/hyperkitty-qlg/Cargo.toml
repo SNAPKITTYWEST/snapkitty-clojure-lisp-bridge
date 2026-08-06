@@ -1,0 +1,11 @@
+[package]
+name = "hyperkitty-qlg"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Quadratic Ledger Geometry"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+serde = { workspace = true }

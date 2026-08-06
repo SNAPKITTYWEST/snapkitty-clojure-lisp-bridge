@@ -1,0 +1,9 @@
+[package]
+name = "hyperkitty-jacobian"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { path = "../hyperkitty-core" }

@@ -1,0 +1,11 @@
+[package]
+name = "hyperkitty-qra"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Quantized Routing Automata"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
+serde = { workspace = true }

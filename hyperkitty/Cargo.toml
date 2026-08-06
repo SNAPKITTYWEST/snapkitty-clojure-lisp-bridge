@@ -29,6 +29,12 @@ members = [
     "crates/hyperkitty-ere",
     "crates/hyperkitty-continuity",
     "crates/hyperkitty-art",
+    "crates/hyperkitty-ast",
+    "crates/hyperkitty-graph",
+    "crates/hyperkitty-jacobian",
+    "crates/hyperkitty-parser",
+    "crates/hyperkitty-api",
+    "crates/hyperkitty-cli",
 ]
 resolver = "2"
 
@@ -65,6 +71,10 @@ hyperkitty-continuity = { path = "crates/hyperkitty-continuity", version = "0.1.
 hyperkitty-worm = { path = "crates/hyperkitty-worm", version = "0.1.0" }
 hyperkitty-jordan = { path = "crates/hyperkitty-jordan", version = "0.1.0" }
 hyperkitty-art = { path = "crates/hyperkitty-art", version = "0.1.0" }
+hyperkitty-ast = { path = "crates/hyperkitty-ast", version = "0.1.0" }
+hyperkitty-graph = { path = "crates/hyperkitty-graph", version = "0.1.0" }
+hyperkitty-jacobian = { path = "crates/hyperkitty-jacobian", version = "0.1.0" }
+hyperkitty-parser = { path = "crates/hyperkitty-parser", version = "0.1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"

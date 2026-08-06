@@ -1,0 +1,12 @@
+[package]
+name = "hyperkitty-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "Core types and utilities for HyperKitty"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

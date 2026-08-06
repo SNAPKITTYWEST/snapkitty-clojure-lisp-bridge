@@ -1,0 +1,10 @@
+[package]
+name = "hyperkitty-nand"
+version = "0.1.0"
+edition = "2021"
+authors = ["SNAPKITTYWEST"]
+description = "NAND kernel - minimal Boolean trust"
+license = "MIT"
+
+[dependencies]
+hyperkitty-core = { workspace = true }
