@@ -1,0 +1,21 @@
+[package]
+name = "hyperkitty-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "HyperKitty WASM bridge — QRA routing, SLA ledger, reconciliation"
+
+[lib]
+crate-type = ["cdylib"]
+name = "hyperkitty_wasm"
+
+[dependencies]
+wasm-bindgen = "0.2"
+hyperkitty-core  = { path = "../hyperkitty-core",  version = "0.1.0" }
+hyperkitty-qra   = { path = "../hyperkitty-qra",   version = "0.1.0" }
+hyperkitty-sla   = { path = "../hyperkitty-sla",   version = "0.1.0" }
+hyperkitty-qlg   = { path = "../hyperkitty-qlg",   version = "0.1.0" }
+hyperkitty-isomorphism = { path = "../hyperkitty-isomorphism", version = "0.1.0" }
+
+[profile.release]
+opt-level = "s"
+lto = true
