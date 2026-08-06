@@ -66,13 +66,21 @@ Key properties:
   - Omega row is absorber: Q[3][j] = 3 for all j
   - All other rows deterministically route based on paper Table 1
 -/
+-- Paper Table 1 (Zenodo PDF, Ahmad Parr 2026):
+--         prev: Pi(0) Ga(1) De(2) Om(3) La(4) Ps(5)
+-- Pi(0):          2     2     3     3     2     2
+-- Ga(1):          2     3     3     3     2     3
+-- De(2):          3     3     3     3     2     3
+-- Om(3):          3     3     3     3     3     3   [absorber]
+-- La(4):          0     1     2     3     4     5   [identity]
+-- Ps(5):          2     3     3     3     2     3
 def Q : Fin 6 → Fin 6 → Fin 6
-  | 4, j => j          -- Lambda row: identity (row 4 = [0,1,2,3,4,5])
-  | 3, _ => 3          -- Omega row: absorber (row 3 = [3,3,3,3,3,3])
-  | 0, _ => 2          -- Pi row
-  | 1, j => if j = 4 then 2 else 3  -- Gamma row
-  | 2, _ => 3          -- Delta row
-  | 5, j => if j = 4 then 2 else 3  -- Psi row
+  | 4, j => j          -- Lambda row: identity
+  | 3, _ => 3          -- Omega row: absorber
+  | 0, j => if j = 2 ∨ j = 3 then 3 else 2  -- Pi: Omega when prev∈{Delta,Omega}, else Delta
+  | 1, j => if j = 0 ∨ j = 4 then 2 else 3  -- Gamma: Delta when prev∈{Pi,Lambda}, else Omega
+  | 2, j => if j = 4 then 2 else 3           -- Delta: Delta when prev=Lambda, else Omega
+  | 5, j => if j = 0 ∨ j = 4 then 2 else 3  -- Psi: Delta when prev∈{Pi,Lambda}, else Omega
   | _, _ => 3
 
 /-!
