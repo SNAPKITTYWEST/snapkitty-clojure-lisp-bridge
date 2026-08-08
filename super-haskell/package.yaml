@@ -1,0 +1,124 @@
+name: super-haskell
+version: 0.1.0.0
+github: SNAPKITTYWEST/super-haskell
+license: BSL-1.1  # Tri-license: BSL 1.1 + AGPL 3.0 + MPL 2.0
+author: Ahmad Parr <ahmedparr93@gmail.com>
+maintainer: Ahmad Parr <ahmedparr93@gmail.com>
+copyright: 2026 Bel Esprit D'Accord Irrevocable Trust
+category: Compiler
+synopsis: Sovereign Algebraic Compute Engine (Agda → Haskell → Rust)
+description: |
+  Type-safe compiler pipeline for HyperKittyConstraintDSL.
+  Agda-verified specifications with GHC Core plugin semantic metaprogramming,
+  algebraic effects runtime, and bidirectional optics IR transformations.
+
+  Architecture: Dependent types (Agda) → Typed Core (GHC Plugin) → Verified FFI (Rust)
+
+extra-source-files:
+  - README.md
+  - spec/*.xml
+  - agda/**/*.agda
+  - LICENSE
+
+dependencies:
+  # Core GHC integration
+  - base >= 4.18 && < 5
+  - ghc >= 9.6 && < 9.10
+  - ghc-paths >= 0.1.0.12
+
+  # Algebraic Effects (Pillar 1)
+  - effectful >= 2.3
+  - effectful-core >= 2.3
+
+  # Optics (Pillar 2)
+  - optics >= 0.4
+  - optics-core >= 0.4
+  - profunctors >= 5.6
+
+  # XML/DSL Parsing (legacy support)
+  - xml-conduit >= 1.9
+  - xml-types >= 0.3
+  - text >= 2.0
+  - bytestring >= 0.11
+
+  # Data structures
+  - containers >= 0.6
+  - unordered-containers >= 0.2
+  - aeson >= 2.1
+  - scientific >= 0.3
+
+  # Monad utilities
+  - mtl >= 2.3
+  - transformers >= 0.6
+
+  # Cryptography (FFI bridge)
+  - cryptonite >= 0.30
+  - memory >= 0.18
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+  - -fno-warn-orphans
+  - -O2
+  - -funbox-strict-fields
+  - -fexpose-all-unfoldings
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - SnapKitty.Compiler.Frontend
+    - SnapKitty.Compiler.Optics
+    - SnapKitty.Compiler.Plugin
+    - SnapKitty.Runtime.Effects
+    - SnapKitty.FFI.Rust
+    - SnapKitty.Proof.Agent.Exported
+  other-modules:
+    - SnapKitty.Compiler.Types
+    - SnapKitty.Runtime.Handlers
+  dependencies:
+    - ghc-boot
+    - ghc-tcplugins-extra >= 0.4
+
+executables:
+  super-haskell-exe:
+    main: Main.hs
+    source-dirs: src
+    dependencies:
+      - super-haskell
+      - optparse-applicative >= 0.18
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -fplugin=SnapKitty.Compiler.Plugin
+
+tests:
+  super-haskell-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - super-haskell
+      - hspec >= 2.11
+      - QuickCheck >= 2.14
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+benchmarks:
+  super-haskell-bench:
+    main: Bench.hs
+    source-dirs: bench
+    dependencies:
+      - super-haskell
+      - criterion >= 1.6
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -O2

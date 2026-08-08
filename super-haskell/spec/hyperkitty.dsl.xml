@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<HyperKittyConstraintDSL version="1.0">
+  <Meta>
+    <System>HK-OS</System>
+    <Mode>DETERMINISTIC-CONSTRAINT-BUILD</Mode>
+    <Output>PROOF_BACKED_ARTIFACT</Output>
+    <TruthPolicy>STATIC_DECLARATION_ONLY</TruthPolicy>
+  </Meta>
+  <BooleanKernel>
+    <Primitive name="NAND"><![CDATA[NAND(a,b)=1-ab]]></Primitive>
+    <Derived name="NOT">NAND(x,x)</Derived>
+    <Derived name="AND">NAND(NAND(a,b),NAND(a,b))</Derived>
+    <Derived name="OR">NAND(NAND(a,a),NAND(b,b))</Derived>
+    <Derived name="IMPLIES">OR(NOT(a),b)</Derived>
+    <Derived name="EQUAL">AND(IMPLIES(a,b),IMPLIES(b,a))</Derived>
+  </BooleanKernel>
+  <GlyphTypeSystem>
+    <Unit symbol="🧠" name="Cognition"/>
+    <Unit symbol="📚" name="Knowledge"/>
+    <Unit symbol="🔍" name="Search"/>
+    <Unit symbol="⚖" name="Constraint"/>
+    <Unit symbol="⚙" name="Transformation"/>
+    <Unit symbol="💾" name="Memory"/>
+    <Unit symbol="🔐" name="Proof"/>
+    <Unit symbol="🌐" name="Interface"/>
+  </GlyphTypeSystem>
+  <AgentModel>
+    <Agent>
+      <Field name="id" type="String"/>
+      <Field name="role" type="GlyphUnit"/>
+      <Field name="entropy" refinement="0 <= entropy <= 0.20"/>
+      <Field name="trusted" type="Boolean"/>
+      <Field name="active" type="Boolean"/>
+    </Agent>
+    <Invariant>active(agent) => trusted(agent)</Invariant>
+    <Invariant>entropy(agent) <= 0.20</Invariant>
+  </AgentModel>
+  <DAG>
+    <Node id="🧠Input"/>
+    <Node id="📚Memory"/>
+    <Node id="🔍Retrieval"/>
+    <Node id="⚙Transform"/>
+    <Node id="⚖Constraint"/>
+    <Node id="🔐Proof"/>
+    <Node id="🌐Output"/>
+    <Edge from="🧠Input" to="📚Memory"/>
+    <Edge from="📚Memory" to="🔍Retrieval"/>
+    <Edge from="🔍Retrieval" to="⚙Transform"/>
+    <Edge from="⚙Transform" to="⚖Constraint"/>
+    <Edge from="⚖Constraint" to="🔐Proof"/>
+    <Edge from="🔐Proof" to="🌐Output"/>
+  </DAG>
+  <TransformationEngine>
+    <Template language="GHC_Core_Plugin">
+      <Rule>PARSE -> TYPE_CHECK -> CORE_PLUGIN(Optimize, Verify, Specialize) -> CODEGEN</Rule>
+    </Template>
+    <Multiplicity>
+      <Expansion>candidates = transform(agent_state,n)</Expansion>
+      <Constraint>accept(candidate) = entropy(candidate)<=0.20 AND proof(candidate)=true</Constraint>
+    </Multiplicity>
+  </TransformationEngine>
+  <QuantumConstraintLayer>
+    <Operator>
+      <Name>SymmetricOperator</Name>
+      <Rule>Q = (Q + transpose(Q))/2</Rule>
+    </Operator>
+    <Entropy>
+      <Metric>Shannon_Nats</Metric>
+      <Formula>H=-Σ(p ln p)</Formula>
+      <Bound>H <= 0.20</Bound>
+    </Entropy>
+    <Routing>Reject states violating entropy constraint.</Routing>
+  </QuantumConstraintLayer>
+  <ProofOutput>
+    <Required>RepositoryAudit, SchemaHash, RuleHash, TransformHash, ConstraintGraph, ValidationResult, ArtifactHash</Required>
+  </ProofOutput>
+</HyperKittyConstraintDSL>

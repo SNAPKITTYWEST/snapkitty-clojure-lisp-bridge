@@ -1,0 +1,43 @@
+SnapKitty Super Haskell — Tri-License Agreement
+Copyright (c) 2026 Bel Esprit D'Accord Irrevocable Trust
+All rights reserved.
+
+This software is licensed under the triple-license model:
+
+1. Business Source License (BSL) 1.1
+   - Commercial use permitted with restrictions
+   - See: https://mariadb.com/bsl11/
+
+2. GNU Affero General Public License (AGPL) 3.0 or later
+   - Network use triggers copyleft
+   - See: https://www.gnu.org/licenses/agpl-3.0.html
+
+3. Mozilla Public License (MPL) 2.0
+   - File-level copyleft
+   - See: https://www.mozilla.org/en-US/MPL/2.0/
+
+You may choose any of these licenses for your use case.
+
+---
+
+Business Source License 1.1
+
+Parameters
+
+Licensor:             Bel Esprit D'Accord Irrevocable Trust
+Licensed Work:        Super Haskell — Sovereign Algebraic Compute Engine
+                     The Licensed Work is (c) 2026 Bel Esprit D'Accord Irrevocable Trust
+
+Additional Use Grant: You may use the Licensed Work for non-production purposes,
+                     including research, development, testing, and educational use.
+
+Change Date:          Four years from the date of first release (2030-08-08)
+
+Change License:       Apache License 2.0
+
+---
+
+For the full text of each license, see:
+- BSL 1.1: https://mariadb.com/bsl11/
+- AGPL 3.0: https://www.gnu.org/licenses/agpl-3.0.html
+- MPL 2.0: https://www.mozilla.org/en-US/MPL/2.0/

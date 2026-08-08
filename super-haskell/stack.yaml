@@ -1,0 +1,29 @@
+resolver: lts-22.7  # GHC 9.6.4
+
+packages:
+  - .
+
+extra-deps:
+  - effectful-2.3.1.0
+  - effectful-core-2.3.1.0
+  - ghc-tcplugins-extra-0.4.6
+
+flags:
+  super-haskell:
+    static: false
+
+ghc-options:
+  "$everything": -haddock
+
+nix:
+  enable: false
+
+allow-newer: true
+allow-newer-deps:
+  - base
+  - ghc
+
+system-ghc: false
+install-ghc: true
+
+pvp-bounds: both
